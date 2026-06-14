@@ -7,6 +7,7 @@ import {
   Lightbulb, FileText, RotateCcw, SkipForward, Pause, Play, Sparkles, CheckCircle2,
 } from "lucide-react";
 import AvatarOrb from "@/components/AvatarOrb";
+import CodeStage, { STARTER_CODE, type CodeState } from "@/components/CodeStage";
 import { useStage } from "@/lib/useStage";
 import { useSpeech } from "@/lib/useSpeech";
 import { encouragement } from "@/components/coach";
@@ -36,6 +37,8 @@ export default function InterviewRoom() {
   const [speakAloud, setSpeakAloud] = useState(config.modalities.includes("voice"));
   const [paused, setPaused] = useState(false);
   const [encourage, setEncourage] = useState("");
+  const codingActive = config.modalities.includes("coding");
+  const [code, setCode] = useState<CodeState>({ language: "javascript", code: STARTER_CODE.javascript, output: "" });
   // coaching help: hint = how to approach; outline = strong-answer skeleton
   const [help, setHelp] = useState<Record<HelpKind, string>>({ hint: "", outline: "" });
   const [helpOpen, setHelpOpen] = useState<HelpKind | null>(null);
@@ -121,6 +124,17 @@ export default function InterviewRoom() {
     } finally {
       setHelpLoading(false);
     }
+  }
+
+  // Compose the answer from the draft + (in coding mode) the editor contents.
+  function composeAndSend() {
+    let text = draft.trim();
+    if (codingActive && code.code.trim() && code.code.trim() !== STARTER_CODE[code.language]?.trim()) {
+      const out = code.output ? `\n\nOutput:\n${code.output}` : "";
+      const note = text ? text + "\n\n" : "Here's my solution:\n\n";
+      text = `${note}\`\`\`${code.language}\n${code.code.trim()}\n\`\`\`${out}`;
+    }
+    sendAnswer(text);
   }
 
   async function sendAnswer(text: string) {
@@ -360,9 +374,10 @@ export default function InterviewRoom() {
         </div>
       </div>
 
-      {/* stage */}
+      {/* stage (split with code editor when coding modality is on) */}
+      <div className={`relative flex min-h-0 flex-1 ${codingActive ? "gap-4 px-4 py-3" : ""}`}>
       <div className="relative flex flex-1 flex-col items-center justify-center px-6">
-        <AvatarOrb level={level} state={orbState as any} size={240} />
+        <AvatarOrb level={level} state={orbState as any} size={codingActive ? 150 : 240} />
         <div className="mt-2 text-xs uppercase tracking-widest text-ink-muted">
           {phase === "connecting" && "connecting…"}
           {phase === "thinking" && "thinking…"}
@@ -430,6 +445,13 @@ export default function InterviewRoom() {
         )}
       </div>
 
+      {codingActive && (
+        <div className="hidden w-[46%] md:block">
+          <CodeStage state={code} onChange={setCode} />
+        </div>
+      )}
+      </div>
+
       {/* captions transcript */}
       <div ref={scrollRef} className="mx-auto max-h-[22vh] w-full max-w-2xl overflow-y-auto px-6">
         <AnimatePresence initial={false}>
@@ -472,12 +494,16 @@ export default function InterviewRoom() {
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendAnswer(draft)}
-            placeholder={phase === "awaiting" ? "Type your answer, or tap the mic…" : "…"}
+            onKeyDown={(e) => e.key === "Enter" && composeAndSend()}
+            placeholder={phase === "awaiting" ? (codingActive ? "Explain your approach… (your code attaches on send)" : "Type your answer, or tap the mic…") : "…"}
             disabled={phase !== "awaiting"}
             className="flex-1 bg-transparent text-ink-primary placeholder:text-ink-muted focus:outline-none disabled:opacity-50"
           />
-          <button onClick={() => sendAnswer(draft)} disabled={phase !== "awaiting" || !draft.trim()} className="btn-accent grid h-9 w-9 place-items-center rounded-full">
+          <button
+            onClick={composeAndSend}
+            disabled={phase !== "awaiting" || (!draft.trim() && !(codingActive && code.code.trim() && code.code.trim() !== STARTER_CODE[code.language]?.trim()))}
+            className="btn-accent grid h-9 w-9 place-items-center rounded-full"
+          >
             {phase === "thinking" || phase === "scoring" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
         </div>

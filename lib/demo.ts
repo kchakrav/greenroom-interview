@@ -65,8 +65,15 @@ function questionBank(config: StageConfig): string[] {
     "Tell me about a time you grew a struggling team member. What did you do week to week?",
     "Describe a strategic bet you made for your org. How did you build alignment and measure it?",
   ];
+  const coding = [
+    "Let's do a coding problem. In your editor, write a function that takes an array of integers and returns the two numbers that add up to a given target (return their indices). Explain your approach and the time complexity as you go.",
+    "Now write a function that reverses the words in a sentence in place. Walk me through your edge cases.",
+  ];
   const base = byDiscipline[discipline.id] ?? byDiscipline.engineering;
-  return [...base, ...common, ...(isLeader ? leader : [])].slice(0, 5);
+  const set = config.modalities.includes("coding")
+    ? [coding[0], ...base.slice(0, 2), coding[1], ...common.slice(0, 1)]
+    : [...base, ...common, ...(isLeader ? leader : [])];
+  return set.slice(0, 5);
 }
 
 export function demoOpening(config: StageConfig): string {
