@@ -257,6 +257,27 @@ export default function InterviewRoom() {
             </button>
           </div>
 
+          {/* voice picker — confirm the interviewer's voice before starting */}
+          {speech.voices.length > 0 && (
+            <div className="mx-auto mt-4 flex max-w-md items-center justify-center gap-2 text-sm">
+              <span className="text-ink-muted">Interviewer voice</span>
+              <select
+                value={speech.voiceURI}
+                onChange={(e) => { speech.setVoice(e.target.value); speech.previewVoice(e.target.value); }}
+                className="glass-strong max-w-[200px] cursor-pointer rounded-full px-3 py-1.5 text-ink-secondary focus:outline-none"
+              >
+                {speech.voices.map((v) => (
+                  <option key={v.uri} value={v.uri} className="bg-elevated text-ink-primary">
+                    {v.name.replace(/\s*\(.*?\)\s*/g, " ").trim()} · {v.lang}
+                  </option>
+                ))}
+              </select>
+              <button onClick={() => speech.previewVoice()} className="glass-strong flex items-center gap-1.5 rounded-full px-3 py-1.5 text-ink-secondary transition hover:text-ink-primary">
+                <Volume2 className="h-3.5 w-3.5" /> Preview
+              </button>
+            </div>
+          )}
+
           <button onClick={beginInterview} className="btn-accent mt-7 w-full rounded-full px-8 py-3.5 text-base">
             {isPractice ? "I'm ready — let's begin →" : "Begin interview →"}
           </button>
@@ -306,6 +327,29 @@ export default function InterviewRoom() {
             {speakAloud ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             {speakAloud ? "Voice" : "Text"}
           </button>
+          {speakAloud && speech.voices.length > 0 && (
+            <div className="glass-strong flex items-center gap-1.5 rounded-full pl-3 pr-1.5 py-1">
+              <select
+                value={speech.voiceURI}
+                onChange={(e) => { speech.setVoice(e.target.value); speech.previewVoice(e.target.value); }}
+                className="max-w-[170px] cursor-pointer bg-transparent text-ink-secondary focus:outline-none"
+                title="Choose the interviewer's voice"
+              >
+                {speech.voices.map((v) => (
+                  <option key={v.uri} value={v.uri} className="bg-elevated text-ink-primary">
+                    {v.name.replace(/\s*\(.*?\)\s*/g, " ").trim()} · {v.lang}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => speech.previewVoice()}
+                className="grid h-7 w-7 place-items-center rounded-full text-ink-secondary transition hover:text-ink-primary"
+                title="Preview this voice"
+              >
+                <Volume2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <button
             onClick={() => finishAndScore()}
             disabled={phase === "scoring" || turns.filter((t) => t.role === "candidate").length === 0}
