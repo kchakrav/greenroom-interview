@@ -488,6 +488,69 @@ export const QUESTION_BANK: BankQuestion[] = [
     prompt: "You're a PM at Meta — set a goal for Instagram Reels for the next 6 months.",
     guidance: "Tie the goal to the NSM and product maturity; make it specific and time-bound; name the input metrics that drive it and the guardrails that protect quality. Strong: realistic target with the reasoning, not a round number.",
     source: "Lenny's Newsletter — The Definitive Guide to Mastering Analytical Thinking (https://www.lennysnewsletter.com/p/the-definitive-guide-to-mastering-f81)", difficulty: 4 },
+
+  // ═══════════════ PM THOUGHT-LEADER FRAMEWORKS (curated, attributed) ═══════════════
+  // Shreyas Doshi — LNO tasks, pre-mortems, three levels of product work, "product sense"
+  { id: "tl-shreyas-1", disciplineId: "product", competency: "Execution", levels: ["mid", "senior", "staff", "manager"], type: "behavioral",
+    prompt: "How do you decide where to spend your own time across your responsibilities? Tell me about a time you reprioritized your effort.",
+    guidance: "Apply Shreyas Doshi's LNO framework — Leverage tasks (do excellently), Neutral (do efficiently), Overhead (do quickly/'good enough'). Strong: conscious effort allocation, not treating all work equally.",
+    source: "Shreyas Doshi — LNO framework / 'effort thinking'", difficulty: 3 },
+  { id: "tl-shreyas-2", disciplineId: "product", competency: "Strategic Thinking", levels: ["senior", "staff", "manager", "director"], type: "case",
+    prompt: "Before a big launch, how do you surface what might go wrong? Walk me through your process.",
+    guidance: "Run a pre-mortem (imagine it failed, work backwards to causes); separate the three levels of product work — Impact, Execution, Optimization. Strong: anticipates risks early and aligns the team on the highest-impact work.",
+    source: "Shreyas Doshi — pre-mortems & 'three levels of product work'", difficulty: 4 },
+
+  // Marty Cagan — outcomes over output, product discovery, empowered teams
+  { id: "tl-cagan-1", disciplineId: "product", competency: "Execution", levels: ["mid", "senior", "staff", "manager"], type: "behavioral",
+    prompt: "Tell me about a time you shifted your team from shipping features to delivering outcomes. What changed?",
+    guidance: "Cagan's empowered-team model: measure outcomes (business/customer results), not output (features shipped); give the team a problem, not a roadmap of solutions. Strong: a real shift with a measured outcome.",
+    source: "Marty Cagan — Inspired / Empowered (outcomes over output)", difficulty: 4 },
+  { id: "tl-cagan-2", disciplineId: "product", competency: "Product Sense", levels: ["mid", "senior", "staff"], type: "case",
+    prompt: "How do you de-risk a product idea before building it? Walk me through your discovery process.",
+    guidance: "Test the four big risks — value, usability, feasibility, business viability — with the riskiest assumption first, using cheap experiments/prototypes before committing engineering. Strong: discovery before delivery.",
+    source: "Marty Cagan — product discovery & the four risks (Inspired)", difficulty: 4 },
+
+  // Teresa Torres — continuous discovery, Opportunity Solution Tree
+  { id: "tl-torres-1", disciplineId: "product", competency: "Product Sense", levels: ["mid", "senior", "staff"], type: "case",
+    prompt: "How do you connect a desired business outcome to the specific things you decide to build?",
+    guidance: "Use an Opportunity Solution Tree: outcome → opportunities (unmet needs/pains, from continuous interviews) → solutions → experiments. Strong: structured discovery tied to weekly customer touchpoints.",
+    source: "Teresa Torres — Continuous Discovery Habits (Opportunity Solution Tree)", difficulty: 4 },
+
+  // Melissa Perri — escaping the build trap, outcome-oriented orgs
+  { id: "tl-perri-1", disciplineId: "product", competency: "Strategic Thinking", levels: ["senior", "staff", "manager", "director", "senior-director"], type: "strategy",
+    prompt: "How do you know if a product organization is in the 'build trap', and how would you get it out?",
+    guidance: "Build trap = measuring success by output/features, not value/outcomes. Fix: outcome-based strategy, product operating model, empowered teams, and a clear strategic intent cascading to team goals.",
+    source: "Melissa Perri — Escaping the Build Trap", difficulty: 5 },
+
+  // Gibson Biddle — DHM product strategy model (Netflix)
+  { id: "tl-biddle-1", disciplineId: "product", competency: "Strategic Thinking", levels: ["senior", "staff", "manager", "director"], type: "strategy",
+    prompt: "How would you craft a product strategy that creates durable competitive advantage?",
+    guidance: "Apply Biddle's DHM model: Delight customers, in Hard-to-copy, Margin-enhancing ways. Strong: a strategy with a moat (hard-to-copy) and a path to better economics, not just a feature list.",
+    source: "Gibson Biddle — DHM product strategy model (Netflix)", difficulty: 5 },
+
+  // Julie Zhuo — management & feedback (The Making of a Manager)
+  { id: "tl-zhuo-1", disciplineId: "product", competency: "People Leadership", levels: MGMT, type: "leadership",
+    prompt: "Tell me about a time you gave feedback that was hard to deliver. How did you approach it?",
+    guidance: "Specific, kind, and actionable feedback delivered early; focus on behavior and impact; create safety. Strong: the report grew, and the relationship held. (Julie Zhuo's manager lens.)",
+    source: "Julie Zhuo — The Making of a Manager", difficulty: 3 },
+
+  // Ken Norton — hiring & coaching PMs
+  { id: "tl-norton-1", disciplineId: "product", competency: "People Leadership", levels: SENIOR_LEADERS, type: "leadership",
+    prompt: "What do you look for when hiring a product manager, and how do you assess it?",
+    guidance: "Ken Norton's lens: product sense, execution, leadership/influence, and 'bringing the donuts' (service mindset). Strong: a clear bar with concrete signals, not gut feel.",
+    source: "Ken Norton — 'How to Hire a Product Manager'", difficulty: 4 },
+
+  // Jackie Bavaro — product strategy & PM career
+  { id: "tl-bavaro-1", disciplineId: "product", competency: "Strategic Thinking", levels: ["senior", "staff", "manager"], type: "strategy",
+    prompt: "What's the difference between product strategy and a roadmap, and how do you make sure your roadmap reflects strategy?",
+    guidance: "Strategy = the logic for how you'll win (insight → approach → bets); the roadmap is the sequenced expression of it. Strong: traces each roadmap item back to the strategy and the metric it moves.",
+    source: "Jackie Bavaro — Cracking the PM Career; Cracking the PM Interview", difficulty: 4 },
+
+  // Sachin Rekhi — product judgment / intuition
+  { id: "tl-rekhi-1", disciplineId: "product", competency: "Product Sense", levels: ["senior", "staff", "manager"], type: "case",
+    prompt: "How do you develop and apply product judgment when the data is ambiguous?",
+    guidance: "Sachin Rekhi's product intuition: combine first-principles user empathy, accumulated pattern-matching, and crisp hypotheses; know when to trust judgment vs test. Strong: a real call made on judgment, then validated.",
+    source: "Sachin Rekhi — building product intuition / product judgment", difficulty: 4 },
 ];
 
 // ───────────────────────── Query helpers ─────────────────────────

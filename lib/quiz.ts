@@ -227,6 +227,33 @@ export const QUIZ_BANK: MCQ[] = [
     options: ["Goals, Actions, Metrics, Evaluation", "Growth, Acquisition, Monetization, Engagement", "Goals, Audience, Metrics, Execution", "Gather, Analyze, Measure, Execute"], correctIndex: 0,
     explanation: "GAME = Goals (what success means), Actions (user actions that drive it), Metrics (how to measure), Evaluation (interpret + guardrails).",
     source: "Exponent — Meta PM interview guide (https://www.tryexponent.com/guides/meta-pm-interview)" },
+
+  // ───── PM thought-leader frameworks ─────
+  { id: "pmq-lno", disciplineId: "product", topic: "Execution",
+    question: "In Shreyas Doshi's LNO framework, an 'L' (Leverage) task should be…",
+    options: ["Done as fast as possible", "Done excellently — it has outsized impact", "Delegated or skipped", "Done only if time remains"], correctIndex: 1,
+    explanation: "LNO = Leverage (do excellently, high ROI), Neutral (do efficiently), Overhead (do quickly / good-enough). Match effort to impact.",
+    source: "Shreyas Doshi — LNO framework" },
+  { id: "pmq-dhm", disciplineId: "product", topic: "Product Sense",
+    question: "Gibson Biddle's DHM model says a great product strategy should…",
+    options: ["Delight customers, in Hard-to-copy, Margin-enhancing ways", "Design, Hypothesize, Measure", "Discover, Headline, Market", "Differentiate, Harmonize, Monetize"], correctIndex: 0,
+    explanation: "DHM = Delight customers, in Hard-to-copy (a moat), Margin-enhancing ways. Advantage must be durable and improve economics.",
+    source: "Gibson Biddle — DHM product strategy model" },
+  { id: "pmq-buildtrap", disciplineId: "product", topic: "Strategic Thinking",
+    question: "Melissa Perri's 'build trap' is when an organization measures success by…",
+    options: ["Customer outcomes and value", "Output — features and projects shipped", "Revenue per employee", "NPS alone"], correctIndex: 1,
+    explanation: "The build trap = focusing on output (shipping features) instead of the outcomes/value those features create.",
+    source: "Melissa Perri — Escaping the Build Trap" },
+  { id: "pmq-ost", disciplineId: "product", topic: "Product Sense",
+    question: "In Teresa Torres' Opportunity Solution Tree, the root node is the…",
+    options: ["List of features", "Desired outcome", "Competitor analysis", "Tech stack"], correctIndex: 1,
+    explanation: "OST flows: desired Outcome → Opportunities (unmet needs) → Solutions → Experiments — keeping discovery tied to a clear outcome.",
+    source: "Teresa Torres — Continuous Discovery Habits" },
+  { id: "pmq-cagan-risks", disciplineId: "product", topic: "Product Sense",
+    question: "Marty Cagan's four big product risks are value, usability, feasibility, and…",
+    options: ["Marketing", "Business viability", "Velocity", "Visibility"], correctIndex: 1,
+    explanation: "Discovery tests value (will they use/buy it?), usability, feasibility (can we build it?), and business viability (does it work for the business?).",
+    source: "Marty Cagan — Inspired (the four risks)" },
 ];
 
 export interface QuizFilter { disciplineId?: string; topic?: string; }
