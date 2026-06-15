@@ -4,8 +4,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Award, TrendingUp, ShieldCheck, Loader2 } from "lucide-react";
 import SkillRadar from "@/components/SkillRadar";
+import CoachChat from "@/components/CoachChat";
 import { recordCompletion, type Progress } from "@/components/gamify";
 import { getClientSession } from "@/lib/clientSession";
+import { addAttempt } from "@/lib/history";
+import { markStepComplete } from "@/lib/pathProgress";
+import { lookup } from "@/lib/taxonomy";
 import type { InterviewSession, ScoreReport } from "@/lib/types";
 
 export default function Feedback({ params }: { params: { id: string } }) {
@@ -25,6 +29,20 @@ export default function Feedback({ params }: { params: { id: string } }) {
     if (rep && !recorded.current) {
       recorded.current = true;
       setProgress(recordCompletion(rep.overall, rep.competencies));
+      const { role } = lookup(s.config.disciplineId, s.config.roleId, s.config.seniorityId);
+      addAttempt({
+        id: s.id,
+        at: s.completedAt ?? Date.now(),
+        disciplineId: s.config.disciplineId,
+        roleId: s.config.roleId,
+        roleLabel: role.label,
+        seniorityId: s.config.seniorityId,
+        overall: rep.overall,
+        competencies: rep.competencies.map((c) => ({ competency: c.competency, score: c.score })),
+        drill: s.config.drill?.competency,
+        pathId: s.config.pathStep?.pathId,
+      });
+      if (s.config.pathStep) markStepComplete(s.config.pathStep.pathId, s.config.pathStep.stepIndex);
     }
   }, [params.id]);
 
@@ -107,6 +125,9 @@ export default function Feedback({ params }: { params: { id: string } }) {
           ))}
         </div>
       </Card>
+
+      {/* Ask the coach — mentoring follow-up chat */}
+      <CoachChat session={session} />
 
       {/* Fairness / transparency */}
       <div className="glass mt-6 flex gap-3 rounded-2xl p-5 text-sm text-ink-secondary">

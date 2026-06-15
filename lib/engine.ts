@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChatTurn, ScoreReport, StageConfig } from "./types";
-import { competenciesFor, lookup } from "./taxonomy";
+import { competenciesFor, lookup, LEADER_LEVELS } from "./taxonomy";
+import { seedQuestions } from "./questionBank";
 
 // Default to Anthropic's most capable model; swap via env if desired.
 export const MODEL = process.env.AIINTERVIEW_MODEL || "claude-opus-4-8";
@@ -33,7 +34,17 @@ export function interviewerSystemPrompt(config: StageConfig): string {
     ? `\n\nJob context to ground questions on:\n${config.jobContext.jobDescription.slice(0, 1500)}`
     : "";
 
-  return `You are an expert interviewer conducting a ${config.mode === "practice" ? "realistic practice" : "real screening"} interview for a ${seniority.label} ${role.label} role in ${discipline.label}.
+  if (config.drill) {
+    return `You are a friendly interview coach running a FOCUSED DRILL on the single competency "${config.drill.competency}" for a ${seniority.label} ${role.label}.
+
+PERSONA / TONE: ${TONE_PERSONA[config.tone]}
+
+Ask exactly TWO short, past-behavior questions that specifically probe ${config.drill.competency} ("Tell me about a time…", "Walk me through what YOU did…"). One adaptive follow-up is fine. Keep turns short and spoken. Be encouraging — this is practice.
+After the candidate answers the second question, give a one-line wrap and end with the token [[END]] on its own.
+Respond ONLY as the interviewer's spoken words — no markdown, lists, or scores.`;
+  }
+
+  return `You are an expert interviewer conducting a realistic practice interview for a ${seniority.label} ${role.label} role in ${discipline.label}.
 
 PERSONA / TONE: ${TONE_PERSONA[config.tone]}
 
@@ -46,11 +57,14 @@ HOW TO RUN A RIGOROUS STRUCTURED INTERVIEW:
 - Ask ONE question at a time. Keep your turns short and conversational — this is spoken aloud.
 - Prefer PAST-BEHAVIOR questions ("Tell me about a time you…", "Walk me through what YOU did…") over hypotheticals — they are more predictive.
 - Ask adaptive follow-ups that probe depth: tradeoffs considered, the candidate's specific contribution, what they'd do differently, quantified impact.
-- Calibrate difficulty to the ${seniority.label} level. ${["manager","director","vp"].includes(config.seniorityId) ? "Emphasize people leadership, strategy, and stakeholder influence." : "Balance hands-on depth with communication."}
+- Calibrate difficulty to the ${seniority.label} level. ${LEADER_LEVELS.includes(config.seniorityId) ? "Emphasize people leadership, strategy, and stakeholder influence." : "Balance hands-on depth with communication."}
 - Allow thinking time; do not penalize brief pauses. Never feed the candidate the answer${config.mode === "screen" ? " or give hints — this is a real screen." : "."}
 - Cover the focus areas across the conversation; move on once you have enough signal on a competency.
 - ${config.mode === "practice" ? "This is practice: be encouraging and keep them moving." : "This is a real screen: stay neutral and standardized."}
 ${config.modalities.includes("coding") ? `- TECHNICAL/CODING ROUND: pose ONE concrete coding or system-design problem the candidate solves in their editor (e.g. a function to implement, or a system to design). Ask them to explain their approach and reason about complexity. When they submit code, review it: correctness, edge cases, complexity, and style — then ask a focused follow-up.` : ""}
+
+QUESTION POOL (drawn from established interview-prep resources — ADAPT these to the candidate, don't read verbatim, and follow up naturally):
+${seedQuestions(config.disciplineId, config.seniorityId).map((s) => `- (${s.competency}) ${s.prompt}  [src: ${s.source}]`).join("\n")}
 
 OUTPUT RULES:
 - Respond ONLY as the interviewer's spoken words. No stage directions, no markdown, no lists, no scores.
@@ -139,6 +153,64 @@ export async function coachingHint(config: StageConfig, question: string): Promi
     .trim();
 }
 
+// Generate multiple-choice concept questions for the Q&A learning mode.
+export async function generateQuiz(disciplineId: string, topic: string, count: number): Promise<any[]> {
+  const schema = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      questions: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            question: { type: "string" },
+            options: { type: "array", items: { type: "string" } },
+            correctIndex: { type: "integer" },
+            explanation: { type: "string" },
+            source: { type: "string" },
+          },
+          required: ["question", "options", "correctIndex", "explanation", "source"],
+        },
+      },
+    },
+    required: ["questions"],
+  };
+  const params: any = {
+    model: MODEL,
+    max_tokens: 3000,
+    output_config: { format: { type: "json_schema", schema } },
+    system: `You are an interview-prep tutor. Generate ${count} multiple-choice concept questions for someone learning ${topic || "core concepts"} in the ${disciplineId} domain, to prepare for interviews. Each question has exactly 4 options, one correct (set correctIndex 0-3), a one-sentence explanation, and a "source" naming a well-known book/resource the concept comes from. Range from fundamental to intermediate. Keep them accurate and unambiguous.`,
+    messages: [{ role: "user", content: `Topic: ${topic || "core concepts"} · Domain: ${disciplineId}` }],
+  };
+  const msg: any = await client().messages.create(params);
+  const text = msg.content.find((b: any) => b.type === "text");
+  const parsed = JSON.parse(text.text);
+  return (parsed.questions || []).map((q: any, i: number) => ({ id: `gen-${i}`, disciplineId, topic, ...q }));
+}
+
+// "Ask the coach" — a follow-up chat grounded in the candidate's own interview.
+export async function coachChat(
+  config: StageConfig,
+  transcript: ChatTurn[],
+  history: { role: "user" | "coach"; text: string }[]
+): Promise<string> {
+  const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
+  const convo = transcript.map((t) => `${t.role === "interviewer" ? "Q" : "A"}: ${t.text}`).join("\n");
+  const msgs: Anthropic.MessageParam[] = history.map((m) => ({
+    role: m.role === "user" ? "user" : "assistant",
+    content: m.text,
+  }));
+  const res = await client().messages.create({
+    model: MODEL,
+    max_tokens: 900,
+    system: `You are a warm, specific interview coach. The candidate just finished a practice ${seniority.label} ${role.label} interview. Here is their transcript:\n\n${convo}\n\nAnswer their questions about how to improve — reference their actual answers, give concrete rewrites and examples, and keep it encouraging and practical. Be concise.`,
+    messages: msgs.length ? msgs : [{ role: "user", content: "How did I do, and what should I focus on first?" }],
+  });
+  return res.content.filter((b) => b.type === "text").map((b: any) => b.text).join("").trim();
+}
+
 // Structural outline of a strong answer (not a verbatim script).
 export async function modelOutline(config: StageConfig, question: string): Promise<string> {
   const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
@@ -157,7 +229,7 @@ export async function modelOutline(config: StageConfig, question: string): Promi
 
 export async function scoreInterview(config: StageConfig, transcript: ChatTurn[]): Promise<ScoreReport> {
   const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
-  const comps = competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
+  const comps = config.drill ? [config.drill.competency] : competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
   const convo = transcript
     .map((t) => `${t.role === "interviewer" ? "INTERVIEWER" : "CANDIDATE"}: ${t.text}`)
     .join("\n");

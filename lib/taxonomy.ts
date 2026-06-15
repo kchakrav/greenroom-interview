@@ -27,7 +27,9 @@ export const SENIORITIES: Seniority[] = [
   { id: "senior", label: "Senior / IC4", expectation: "Ambiguity handling, technical leadership, cross-team influence." },
   { id: "staff", label: "Staff / Principal", expectation: "Org-level impact, strategy, multiplier effect on others." },
   { id: "manager", label: "Manager", expectation: "People leadership, delivery through a team, coaching." },
+  { id: "senior-manager", label: "Senior Manager", expectation: "Leading managers or a large team; cross-team delivery and planning." },
   { id: "director", label: "Director", expectation: "Multi-team strategy, org design, executive communication." },
+  { id: "senior-director", label: "Senior Director", expectation: "Multi-org leadership, long-range strategy, exec stakeholder management, P&L influence." },
   { id: "vp", label: "VP / Exec", expectation: "Function-wide vision, business outcomes, board-level narrative." },
 ];
 
@@ -125,8 +127,10 @@ export const DISCIPLINES: Discipline[] = [
 
 // Leveled competency set for a (discipline, role, seniority). Used to seed
 // question generation and the BARS rubric so scoring is consistent.
+export const LEADER_LEVELS = ["staff", "manager", "senior-manager", "director", "senior-director", "vp"];
+
 export function competenciesFor(disciplineId: string, roleId: string, seniorityId: string): string[] {
-  const isLeader = ["manager", "director", "vp", "staff"].includes(seniorityId);
+  const isLeader = LEADER_LEVELS.includes(seniorityId);
   const base: Record<string, string[]> = {
     engineering: ["Problem Solving", "Technical Depth", "Code/Design Quality", "Communication", "Collaboration"],
     product: ["Product Sense", "Analytical Thinking", "Execution", "Communication", "Stakeholder Influence"],

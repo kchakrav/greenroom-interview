@@ -5,7 +5,7 @@ export type Tone = "warm" | "neutral" | "executive" | "high-pressure";
 export type Modality = "voice" | "video" | "text" | "coding";
 
 export interface StageConfig {
-  mode: Mode;
+  mode: Mode; // always "practice" — learning product (kept for compatibility)
   disciplineId: string;
   roleId: string;
   seniorityId: string;
@@ -14,7 +14,23 @@ export interface StageConfig {
   modalities: Modality[];
   durationMin: number;
   language: string;
+  drill?: { competency: string }; // focused single-competency drill
+  pathStep?: { pathId: string; stepIndex: number }; // launched from a learning path
   jobContext?: { jobDescription?: string; company?: string; resume?: string };
+}
+
+// One completed attempt, summarized for the progress dashboard & path tracking.
+export interface AttemptSummary {
+  id: string;
+  at: number;
+  disciplineId: string;
+  roleId: string;
+  roleLabel: string;
+  seniorityId: string;
+  overall: number;
+  competencies: { competency: string; score: number }[];
+  drill?: string; // competency name if this was a drill
+  pathId?: string;
 }
 
 export interface ChatTurn {

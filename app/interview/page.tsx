@@ -325,7 +325,7 @@ export default function InterviewRoom() {
       <div className="glass z-10 flex items-center justify-between px-6 py-3 text-sm">
         <div className="flex items-center gap-2 text-ink-secondary">
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: `linear-gradient(90deg, ${tone.accent}, ${tone.accent2})` }} />
-          {seniority.label} {role.label} · <span className="capitalize">{config.mode}</span> · {tone.label}
+          {config.drill ? `Drill · ${config.drill.competency}` : `${seniority.label} ${role.label}`} · {tone.label}
           {demo && (
             <span className="ml-2 rounded-full bg-signal-warn/15 px-2.5 py-0.5 text-xs font-medium text-signal-warn">
               Prototype mode · add ANTHROPIC_API_KEY for real AI

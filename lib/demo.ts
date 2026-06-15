@@ -3,7 +3,8 @@
 // zero keys. Once a key is present, the routes use the real Claude engine.
 
 import type { ChatTurn, ScoreReport, StageConfig } from "./types";
-import { competenciesFor, lookup } from "./taxonomy";
+import { competenciesFor, lookup, LEADER_LEVELS } from "./taxonomy";
+import { seedQuestions } from "./questionBank";
 
 export function demoMode(): boolean {
   return !process.env.ANTHROPIC_API_KEY;
@@ -19,7 +20,16 @@ const TONE_OPENER: Record<StageConfig["tone"], string> = {
 // Role-aware question banks (behavioral + role-specific). Past-behavior framed.
 function questionBank(config: StageConfig): string[] {
   const { discipline, role } = lookup(config.disciplineId, config.roleId, config.seniorityId);
-  const isLeader = ["manager", "director", "vp", "staff"].includes(config.seniorityId);
+  const isLeader = LEADER_LEVELS.includes(config.seniorityId);
+
+  // Focused drill: 2 short questions on a single competency.
+  if (config.drill) {
+    const c = config.drill.competency;
+    return [
+      `Quick drill on ${c}. Tell me about a specific time ${c.toLowerCase()} really mattered in your work — what did you do?`,
+      `Good. One more on ${c}: walk me through a moment where it was tested and what you learned.`,
+    ];
+  }
   const common = [
     "Tell me about a time you faced a hard tradeoff with limited information. Walk me through what you actually did.",
     "Describe a project you're proud of — what was your specific contribution, and how did you measure impact?",
@@ -69,10 +79,17 @@ function questionBank(config: StageConfig): string[] {
     "Let's do a coding problem. In your editor, write a function that takes an array of integers and returns the two numbers that add up to a given target (return their indices). Explain your approach and the time complexity as you go.",
     "Now write a function that reverses the words in a sentence in place. Walk me through your edge cases.",
   ];
+  // Prefer sourced, level-matched questions from the curated bank; fall back to
+  // the discipline defaults below if the bank is thin for this combination.
+  const seeded = seedQuestions(config.disciplineId, config.seniorityId, 6)
+    .filter((s) => s.type !== "coding")
+    .map((s) => s.prompt);
+
   const base = byDiscipline[discipline.id] ?? byDiscipline.engineering;
-  const set = config.modalities.includes("coding")
-    ? [coding[0], ...base.slice(0, 2), coding[1], ...common.slice(0, 1)]
-    : [...base, ...common, ...(isLeader ? leader : [])];
+  if (config.modalities.includes("coding")) {
+    return [coding[0], ...base.slice(0, 2), coding[1], ...common.slice(0, 1)].slice(0, 5);
+  }
+  const set = seeded.length >= 4 ? seeded : [...base, ...common, ...(isLeader ? leader : [])];
   return set.slice(0, 5);
 }
 
@@ -114,7 +131,7 @@ const FILLERS = ["um", "uh", "like", "you know", "kind of", "sort of", "basicall
 export function demoHint(config: StageConfig, question: string): string {
   const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
   const comps = competenciesFor(config.disciplineId, config.roleId, config.seniorityId).slice(0, 3).join(", ");
-  const isLeader = ["manager", "director", "vp", "staff"].includes(config.seniorityId);
+  const isLeader = LEADER_LEVELS.includes(config.seniorityId);
   return [
     `Structure with STAR — Situation, Task, Action, Result. Lead with one sentence of context, then spend most of your time on what YOU did and the measurable result.`,
     `What they're assessing here: ${comps}.`,
@@ -123,6 +140,29 @@ export function demoHint(config: StageConfig, question: string): string {
       : `At the ${seniority.label} level, show concrete ownership and depth — the specific decisions and tradeoffs you made.`,
     `Pointers: name the tradeoffs you weighed · quantify the impact (%, $, time) · close with what you'd do differently.`,
   ].join("\n");
+}
+
+// "Ask the coach" reply in demo mode — references the candidate's answers.
+export function demoCoachChat(
+  config: StageConfig,
+  transcript: ChatTurn[],
+  history: { role: "user" | "coach"; text: string }[]
+): string {
+  const { role } = lookup(config.disciplineId, config.roleId, config.seniorityId);
+  const answers = transcript.filter((t) => t.role === "candidate");
+  const longest = answers.slice().sort((a, b) => b.text.length - a.text.length)[0]?.text ?? "";
+  const q = (history[history.length - 1]?.text ?? "").toLowerCase();
+
+  if (/star|structure|format/.test(q)) {
+    return `Great question. Take your strongest story and force it into STAR:\n• Situation — one sentence of context.\n• Task — what YOU owned.\n• Action — the 2-3 key things you did and the tradeoffs (spend most of your time here).\n• Result — a number, then what you learned.\nTry re-telling it that way out loud — it'll feel tighter immediately.`;
+  }
+  if (/improve|better|focus|weak/.test(q)) {
+    return `Two highest-leverage fixes for a ${role.label}:\n1. Quantify impact — most answers improve instantly with one metric (%, $, time saved).\n2. Make ownership explicit — say "I decided / I built", not "we". \nYou clearly have the material${longest ? ` (your answer about "${longest.slice(0, 50)}…" had good substance)` : ""} — it's mostly about packaging it.`;
+  }
+  if (/example|rewrite|how would you/.test(q)) {
+    return `Here's the shape of a strong opener: "When [situation], the problem was [X]. I decided to [your action] because [tradeoff]. That moved [metric] from A to B, and I learned [Y]." Plug your own story into that skeleton and it'll land.`;
+  }
+  return `Good question. In short: lead with the outcome, keep the Situation to one sentence, spend your words on YOUR specific actions and the tradeoffs, and always close on a measurable result. Want me to show that on one of your answers? (This is demo coaching — add an ANTHROPIC_API_KEY for fully personalized, transcript-aware advice.)`;
 }
 
 // A structural outline of how a strong answer would be built (not a script).
@@ -140,7 +180,7 @@ export function demoOutline(config: StageConfig, question: string): string {
 
 export function demoScore(config: StageConfig, transcript: ChatTurn[]): ScoreReport {
   const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
-  const comps = competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
+  const comps = config.drill ? [config.drill.competency] : competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
   const answers = transcript.filter((t) => t.role === "candidate");
   const allText = answers.map((a) => a.text).join(" ");
   const words = allText.trim() ? allText.trim().split(/\s+/).length : 0;
