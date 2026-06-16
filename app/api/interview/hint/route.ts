@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coachingHint, modelOutline } from "@/lib/engine";
-import { demoMode, demoHint, demoOutline } from "@/lib/demo";
+import { demoMode, demoHint, demoOutline, shouldFallbackToDemo } from "@/lib/demo";
 import type { StageConfig } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -18,15 +18,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "coaching help is only available in practice mode" }, { status: 403 });
 
     const wantOutline = kind === "outline";
-    const text = demoMode()
-      ? wantOutline
-        ? demoOutline(config, question)
-        : demoHint(config, question)
-      : wantOutline
-      ? await modelOutline(config, question)
-      : await coachingHint(config, question);
+    const demoText = () => (wantOutline ? demoOutline(config, question) : demoHint(config, question));
 
-    return NextResponse.json({ hint: text });
+    if (demoMode()) return NextResponse.json({ hint: demoText() });
+    try {
+      const text = wantOutline ? await modelOutline(config, question) : await coachingHint(config, question);
+      return NextResponse.json({ hint: text });
+    } catch (e: any) {
+      if (shouldFallbackToDemo(e)) {
+        console.warn("interview/hint: falling back to demo —", e?.message);
+        return NextResponse.json({ hint: demoText() });
+      }
+      throw e;
+    }
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "request failed" }, { status: 500 });
   }

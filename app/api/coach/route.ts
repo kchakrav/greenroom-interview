@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { coachChat } from "@/lib/engine";
-import { demoMode, demoCoachChat } from "@/lib/demo";
+import { demoMode, demoCoachChat, shouldFallbackToDemo } from "@/lib/demo";
 import type { ChatTurn, StageConfig } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -14,10 +14,17 @@ export async function POST(req: NextRequest) {
       transcript: ChatTurn[];
       history: { role: "user" | "coach"; text: string }[];
     };
-    const reply = demoMode()
-      ? demoCoachChat(config, transcript, history)
-      : await coachChat(config, transcript, history);
-    return NextResponse.json({ reply });
+    if (demoMode()) return NextResponse.json({ reply: demoCoachChat(config, transcript, history) });
+    try {
+      const reply = await coachChat(config, transcript, history);
+      return NextResponse.json({ reply });
+    } catch (e: any) {
+      if (shouldFallbackToDemo(e)) {
+        console.warn("coach: falling back to demo —", e?.message);
+        return NextResponse.json({ reply: demoCoachChat(config, transcript, history) });
+      }
+      throw e;
+    }
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "coach failed" }, { status: 500 });
   }

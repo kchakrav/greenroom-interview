@@ -10,6 +10,20 @@ export function demoMode(): boolean {
   return !process.env.ANTHROPIC_API_KEY;
 }
 
+// When a real Claude call fails for an operational reason — no credits/billing,
+// bad/expired key, rate limit, overload, network — we transparently fall back to
+// the no-key demo experience instead of surfacing a raw error to the user.
+export function shouldFallbackToDemo(e: any): boolean {
+  const status = e?.status ?? e?.statusCode;
+  const msg = (e?.message || "").toLowerCase();
+  if (status === 400 && /credit balance|billing|too low/.test(msg)) return true;
+  if (status === 401 || status === 403 || status === 429 || status === 529) return true;
+  if (status && status >= 500) return true;
+  if (/credit|billing|quota|rate limit|overloaded|insufficient|api key/.test(msg)) return true;
+  // Default: be resilient — a live interview should never hard-fail on the model.
+  return true;
+}
+
 const TONE_OPENER: Record<StageConfig["tone"], string> = {
   warm: "Welcome — really glad you're here, and there's no pressure at all.",
   neutral: "Thanks for joining.",

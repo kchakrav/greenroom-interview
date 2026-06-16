@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateQuiz } from "@/lib/engine";
-import { demoMode } from "@/lib/demo";
+import { demoMode, shouldFallbackToDemo } from "@/lib/demo";
 import { quizQuestions } from "@/lib/quiz";
 
 export const runtime = "nodejs";
@@ -27,10 +27,16 @@ export async function POST(req: NextRequest) {
           questions = [...questions, ...gen];
         } catch { /* bank is enough */ }
       }
+    } else if (demoMode()) {
+      questions = quizQuestions({ disciplineId, topic }, n);
     } else {
-      questions = demoMode()
-        ? quizQuestions({ disciplineId, topic }, n)
-        : await generateQuiz(disciplineId, topic ?? "", n);
+      try {
+        questions = await generateQuiz(disciplineId, topic ?? "", n);
+      } catch (e: any) {
+        if (!shouldFallbackToDemo(e)) throw e;
+        console.warn("quiz: falling back to curated bank —", e?.message);
+        questions = quizQuestions({ disciplineId, topic }, n);
+      }
     }
     return NextResponse.json({ questions, demo: demoMode() });
   } catch (e: any) {

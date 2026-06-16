@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scoreInterview } from "@/lib/engine";
-import { demoMode, demoScore } from "@/lib/demo";
+import { demoMode, demoScore, shouldFallbackToDemo } from "@/lib/demo";
 import type { ChatTurn, StageConfig } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -17,8 +17,17 @@ export async function POST(req: NextRequest) {
     if (candidateTurns.length === 0)
       return NextResponse.json({ error: "no candidate responses to score" }, { status: 400 });
 
-    const report = demoMode() ? demoScore(config, transcript) : await scoreInterview(config, transcript);
-    return NextResponse.json({ report });
+    if (demoMode()) return NextResponse.json({ report: demoScore(config, transcript) });
+    try {
+      const report = await scoreInterview(config, transcript);
+      return NextResponse.json({ report });
+    } catch (e: any) {
+      if (shouldFallbackToDemo(e)) {
+        console.warn("interview/score: falling back to demo —", e?.message);
+        return NextResponse.json({ report: demoScore(config, transcript) });
+      }
+      throw e;
+    }
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "scoring failed" }, { status: 500 });
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { client, MODEL, interviewerSystemPrompt } from "@/lib/engine";
-import { demoMode, demoOpening } from "@/lib/demo";
+import { demoMode, demoOpening, shouldFallbackToDemo } from "@/lib/demo";
 import type { StageConfig } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -11,10 +11,11 @@ export async function POST(req: NextRequest) {
   try {
     const { config } = (await req.json()) as { config: StageConfig };
 
-    let opening: string;
     if (demoMode()) {
-      opening = demoOpening(config);
-    } else {
+      return NextResponse.json({ opening: demoOpening(config), demo: true });
+    }
+
+    try {
       const system = interviewerSystemPrompt(config);
       const msg = await client().messages.create({
         model: MODEL,
@@ -28,15 +29,21 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
-      opening = msg.content
+      const opening = msg.content
         .filter((b) => b.type === "text")
         .map((b: any) => b.text)
         .join("")
         .replace(/\[\[END\]\]/g, "")
         .trim();
+      return NextResponse.json({ opening, demo: false });
+    } catch (e: any) {
+      // No credits / billing / auth / rate limit → fall back to the demo flow.
+      if (shouldFallbackToDemo(e)) {
+        console.warn("interview/start: falling back to demo —", e?.message);
+        return NextResponse.json({ opening: demoOpening(config), demo: true });
+      }
+      throw e;
     }
-
-    return NextResponse.json({ opening, demo: demoMode() });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "start failed" }, { status: 500 });
   }
