@@ -12,11 +12,21 @@ import type { MCQ } from "@/lib/quiz";
 
 type Phase = "setup" | "loading" | "quiz" | "done";
 
+const AREAS = [...DISCIPLINES.map((d) => ({ id: d.id, label: d.label })), { id: "aiml", label: "AI / ML" }];
+
 export default function LearnPage() {
   const router = useRouter();
   const { config, set } = useStage();
   const [disciplineId, setDisciplineId] = useState(config.disciplineId);
   const [topic, setTopic] = useState("all");
+
+  // Honor a hint from the home "AI / ML" card (set just before navigation).
+  useEffect(() => {
+    try {
+      const hint = localStorage.getItem("aii-learn-area");
+      if (hint) { setDisciplineId(hint); setTopic("all"); localStorage.removeItem("aii-learn-area"); }
+    } catch {}
+  }, []);
   const [phase, setPhase] = useState<Phase>("setup");
   const [qs, setQs] = useState<MCQ[]>([]);
   const [i, setI] = useState(0);
@@ -67,7 +77,7 @@ export default function LearnPage() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass mt-8 rounded-3xl p-8">
           <Label>Area</Label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {DISCIPLINES.map((d) => (
+            {AREAS.map((d) => (
               <Chip key={d.id} active={disciplineId === d.id} onClick={() => { setDisciplineId(d.id); setTopic("all"); }}>{d.label}</Chip>
             ))}
           </div>

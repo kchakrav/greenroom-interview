@@ -258,16 +258,25 @@ export const QUIZ_BANK: MCQ[] = [
 
 export interface QuizFilter { disciplineId?: string; topic?: string; }
 
+// Full MCQ corpus = general/discipline bank + the AI/ML knowledge base.
+import { AIML_BANK } from "./aiml";
+const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...AIML_BANK];
+
 export function quizQuestions(f: QuizFilter, count = 6): MCQ[] {
-  let pool = QUIZ_BANK.filter((m) =>
-    (!f.disciplineId || f.disciplineId === "all" || m.disciplineId === f.disciplineId || m.disciplineId === "general") &&
+  // AI/ML is a self-contained knowledge base — don't fold in "general".
+  const includeGeneral = f.disciplineId !== "aiml";
+  let pool = ALL_MCQ.filter((m) =>
+    (!f.disciplineId || f.disciplineId === "all" || m.disciplineId === f.disciplineId || (includeGeneral && m.disciplineId === "general")) &&
     (!f.topic || f.topic === "all" || m.topic === f.topic)
   );
-  if (pool.length < 3) pool = QUIZ_BANK.filter((m) => !f.disciplineId || m.disciplineId === f.disciplineId || m.disciplineId === "general");
+  if (pool.length < 3) {
+    pool = ALL_MCQ.filter((m) => !f.disciplineId || f.disciplineId === "all" || m.disciplineId === f.disciplineId || (includeGeneral && m.disciplineId === "general"));
+  }
   return pool.slice(0, count);
 }
 
 export function quizTopics(disciplineId?: string): string[] {
-  const pool = QUIZ_BANK.filter((m) => !disciplineId || disciplineId === "all" || m.disciplineId === disciplineId || m.disciplineId === "general");
+  const includeGeneral = disciplineId !== "aiml";
+  const pool = ALL_MCQ.filter((m) => !disciplineId || disciplineId === "all" || m.disciplineId === disciplineId || (includeGeneral && m.disciplineId === "general"));
   return Array.from(new Set(pool.map((m) => m.topic))).sort();
 }
