@@ -1,24 +1,27 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText } from "lucide-react";
+import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check } from "lucide-react";
 import Nav from "@/components/Nav";
 import { QUESTION_BANK, queryBank, bankFacets, type QType } from "@/lib/questionBank";
+import { queryMCQ, mcqFacets } from "@/lib/quiz";
 import { SENIORITIES, lookup } from "@/lib/taxonomy";
 import { loadHistory } from "@/lib/history";
 import { getClientSession } from "@/lib/clientSession";
 import type { AttemptSummary } from "@/lib/types";
 
-type Tab = "questions" | "attempts";
+type Tab = "questions" | "concepts" | "attempts";
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("questions");
   const facets = useMemo(() => bankFacets(), []);
+  const mcqF = useMemo(() => mcqFacets(), []);
   const [q, setQ] = useState("");
   const [discipline, setDiscipline] = useState("all");
   const [level, setLevel] = useState("all");
   const [type, setType] = useState("all");
   const [source, setSource] = useState("all");
+  const [mTopic, setMTopic] = useState("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
 
@@ -28,10 +31,16 @@ export default function AdminPage() {
     () => queryBank({ q, disciplineId: discipline, level, type: type as QType, source }),
     [q, discipline, level, type, source]
   );
+  const mcqResults = useMemo(
+    () => queryMCQ({ q, disciplineId: discipline, topic: mTopic, source }),
+    [q, discipline, mTopic, source]
+  );
 
   function exportJSON() {
     const data = tab === "questions"
       ? { questionBank: results }
+      : tab === "concepts"
+      ? { conceptMCQs: mcqResults }
       : { attempts: attempts.map((a) => ({ ...a, session: getClientSession(a.id) })) };
     download(JSON.stringify(data, null, 2), `greenroom-${tab}.json`, "application/json");
   }
@@ -40,6 +49,10 @@ export default function AdminPage() {
       const rows = [["id", "discipline", "competency", "levels", "type", "difficulty", "source", "prompt", "guidance"]];
       results.forEach((b) => rows.push([b.id, b.disciplineId, b.competency, b.levels.join("|"), b.type, String(b.difficulty), b.source, b.prompt, b.guidance]));
       download(toCSV(rows), "greenroom-questions.csv", "text/csv");
+    } else if (tab === "concepts") {
+      const rows = [["id", "discipline", "topic", "source", "question", "options", "correct", "explanation"]];
+      mcqResults.forEach((m) => rows.push([m.id, m.disciplineId, m.topic, m.source, m.question, m.options.join("|"), m.options[m.correctIndex], m.explanation]));
+      download(toCSV(rows), "greenroom-concepts.csv", "text/csv");
     } else {
       const rows = [["id", "at", "role", "seniority", "overall", "competencies"]];
       attempts.forEach((a) => rows.push([a.id, new Date(a.at).toISOString(), a.roleLabel, a.seniorityId, String(a.overall), a.competencies.map((c) => `${c.competency}:${c.score}`).join("|")]));
@@ -56,7 +69,7 @@ export default function AdminPage() {
             <Database className="h-7 w-7" style={{ color: "var(--accent)" }} /> Admin · question database
           </h1>
           <p className="mt-2 text-ink-secondary">
-            Query the full question bank ({facets.total} questions across {facets.disciplines.length} disciplines, {facets.sources.length} sources) and view recorded attempts.
+            Query {facets.total} interview questions + {mcqF.total} concept MCQs (incl. the AI/ML knowledge base), across {facets.disciplines.length} disciplines and {facets.sources.length + mcqF.sources.length} sources, plus recorded attempts.
           </p>
         </div>
         <div className="flex gap-2">
@@ -66,8 +79,9 @@ export default function AdminPage() {
       </div>
 
       {/* tabs */}
-      <div className="mt-6 flex gap-2">
-        <Tab2 active={tab === "questions"} onClick={() => setTab("questions")} icon={BookOpen} label={`Questions (${QUESTION_BANK.length})`} />
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Tab2 active={tab === "questions"} onClick={() => setTab("questions")} icon={BookOpen} label={`Interview questions (${QUESTION_BANK.length})`} />
+        <Tab2 active={tab === "concepts"} onClick={() => setTab("concepts")} icon={BrainCircuit} label={`Concept MCQs (${mcqF.total})`} />
         <Tab2 active={tab === "attempts"} onClick={() => setTab("attempts")} icon={FileText} label={`Attempts (${attempts.length})`} />
       </div>
 
@@ -105,6 +119,46 @@ export default function AdminPage() {
                     <p className="text-ink-secondary"><b className="text-ink-primary">Model-answer guidance:</b> {b.guidance}</p>
                     <p className="mt-2 text-ink-muted"><b>Levels:</b> {b.levels.map((l) => SENIORITIES.find((s) => s.id === l)?.label ?? l).join(", ")}</p>
                     <p className="mt-1 text-ink-muted"><b>Source:</b> {b.source}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : tab === "concepts" ? (
+        <>
+          {/* concept-MCQ query controls */}
+          <div className="mt-4 grid gap-2 md:grid-cols-4">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="glass-strong rounded-xl px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none" />
+            <Select value={discipline} onChange={setDiscipline} options={["all", ...mcqF.disciplines]} />
+            <Select value={mTopic} onChange={setMTopic} options={["all", ...mcqF.topics]} truncate />
+            <Select value={source} onChange={setSource} options={["all", ...mcqF.sources]} truncate />
+          </div>
+          <p className="mt-3 text-sm text-ink-muted">{mcqResults.length} result{mcqResults.length === 1 ? "" : "s"}</p>
+          <div className="mt-2 space-y-2">
+            {mcqResults.map((m) => (
+              <div key={m.id} className="glass rounded-2xl">
+                <button onClick={() => setOpen((o) => ({ ...o, [m.id]: !o[m.id] }))} className="flex w-full items-start gap-3 p-4 text-left">
+                  {open[m.id] ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted" />}
+                  <div className="flex-1">
+                    <div className="text-ink-primary">{m.question}</div>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                      <Tag>{m.disciplineId === "aiml" ? "AI / ML" : m.disciplineId}</Tag>
+                      <Tag accent>{m.topic}</Tag>
+                    </div>
+                  </div>
+                </button>
+                {open[m.id] && (
+                  <div className="border-t border-hair px-4 pb-4 pl-11 pt-3 text-sm">
+                    <div className="space-y-1">
+                      {m.options.map((opt, idx) => (
+                        <div key={idx} className={`flex items-center gap-2 ${idx === m.correctIndex ? "text-signal-ok" : "text-ink-secondary"}`}>
+                          {idx === m.correctIndex ? <Check className="h-3.5 w-3.5" /> : <span className="h-3.5 w-3.5" />} {opt}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-ink-secondary"><b className="text-ink-primary">Why:</b> {m.explanation}</p>
+                    <p className="mt-1 text-ink-muted"><b>Source:</b> {m.source}</p>
                   </div>
                 )}
               </div>

@@ -280,3 +280,24 @@ export function quizTopics(disciplineId?: string): string[] {
   const pool = ALL_MCQ.filter((m) => !disciplineId || disciplineId === "all" || m.disciplineId === disciplineId || (includeGeneral && m.disciplineId === "general"));
   return Array.from(new Set(pool.map((m) => m.topic))).sort();
 }
+
+// ───────── Admin: query the full concept-MCQ corpus (general + AI/ML) ─────────
+export interface MCQFilter { q?: string; disciplineId?: string; topic?: string; source?: string; }
+
+export function queryMCQ(f: MCQFilter = {}): MCQ[] {
+  const q = f.q?.toLowerCase().trim();
+  return ALL_MCQ.filter((m) => {
+    if (f.disciplineId && f.disciplineId !== "all" && m.disciplineId !== f.disciplineId) return false;
+    if (f.topic && f.topic !== "all" && m.topic !== f.topic) return false;
+    if (f.source && f.source !== "all" && m.source !== f.source) return false;
+    if (q && !(m.question.toLowerCase().includes(q) || m.explanation.toLowerCase().includes(q) || m.topic.toLowerCase().includes(q) || m.source.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+
+export function mcqFacets() {
+  const disciplines = Array.from(new Set(ALL_MCQ.map((m) => m.disciplineId))).sort();
+  const topics = Array.from(new Set(ALL_MCQ.map((m) => m.topic))).sort();
+  const sources = Array.from(new Set(ALL_MCQ.map((m) => m.source))).sort();
+  return { disciplines, topics, sources, total: ALL_MCQ.length };
+}
