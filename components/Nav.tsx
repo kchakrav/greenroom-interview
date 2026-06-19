@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Dumbbell, Map, LineChart, Mic, GraduationCap, Database } from "lucide-react";
+import { Dumbbell, Map, LineChart, Mic, GraduationCap, Database, Library } from "lucide-react";
 import { loadProgress, xpForLevel, type Progress } from "@/components/gamify";
 
 const LINKS = [
   { href: "/", label: "Practice", icon: Mic },
   { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/reference", label: "Reference", icon: Library },
   { href: "/drills", label: "Drills", icon: Dumbbell },
   { href: "/paths", label: "Paths", icon: Map },
   { href: "/progress", label: "Progress", icon: LineChart },

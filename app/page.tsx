@@ -42,8 +42,9 @@ export default function Onboarding() {
 
       {/* Choose how to practice — non-rigid: pick what fits today */}
       <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-secondary">How do you want to practice?</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <PracticeCard icon="GraduationCap" title="Learn concepts" blurb="Multiple-choice Q&A to build your foundation." onClick={() => router.push("/learn")} />
+        <PracticeCard icon="Library" title="Knowledge bank" blurb="Browse AI/ML concepts, trends, acronyms & papers." onClick={() => router.push("/reference")} />
         <PracticeCard icon="BrainCircuit" title="AI / ML" blurb="Knowledge base: fundamentals → LLMs, RAG, agents → latest." onClick={() => { try { localStorage.setItem("aii-learn-area", "aiml"); } catch {} router.push("/learn"); }} />
         <PracticeCard icon="Dumbbell" title="Quick drill" blurb="2-question rep on one competency." onClick={() => router.push("/drills")} />
         <PracticeCard icon="Map" title="Learning path" blurb="A guided curriculum, concepts → interview." onClick={() => router.push("/paths")} />
