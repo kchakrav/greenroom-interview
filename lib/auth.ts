@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { recordLogin } from "./analytics";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,6 +24,13 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
+  events: {
+    async signIn({ user }) {
+      if (user.id && user.email !== "admin@local") {
+        await recordLogin({ id: user.id, name: user.name, email: user.email, image: user.image });
+      }
+    },
+  },
   callbacks: {
     jwt({ token, account, user }) {
       if (account) token.sub = account.providerAccountId;

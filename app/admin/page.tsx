@@ -1,7 +1,8 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check } from "lucide-react";
+import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check, Users, Activity, Clock, LogIn } from "lucide-react";
+import Image from "next/image";
 import Nav from "@/components/Nav";
 import { QUESTION_BANK, queryBank, bankFacets, type QType } from "@/lib/questionBank";
 import { queryMCQ, mcqFacets } from "@/lib/quiz";
@@ -9,8 +10,9 @@ import { SENIORITIES, lookup } from "@/lib/taxonomy";
 import { loadHistory } from "@/lib/history";
 import { getClientSession } from "@/lib/clientSession";
 import type { AttemptSummary } from "@/lib/types";
+import type { UserRecord, LoginEvent } from "@/lib/analytics";
 
-type Tab = "questions" | "concepts" | "attempts";
+type Tab = "questions" | "concepts" | "attempts" | "users";
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("questions");
@@ -24,8 +26,16 @@ export default function AdminPage() {
   const [mTopic, setMTopic] = useState("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
+  const [analytics, setAnalytics] = useState<{ users: UserRecord[]; recentLogins: LoginEvent[]; totalUsers: number; activeToday: number; activeThisWeek: number } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => setAttempts(loadHistory()), []);
+
+  useEffect(() => {
+    if (tab !== "users" || analytics) return;
+    setAnalyticsLoading(true);
+    fetch("/api/admin/analytics").then((r) => r.json()).then(setAnalytics).finally(() => setAnalyticsLoading(false));
+  }, [tab, analytics]);
 
   const results = useMemo(
     () => queryBank({ q, disciplineId: discipline, level, type: type as QType, source }),
@@ -83,6 +93,7 @@ export default function AdminPage() {
         <Tab2 active={tab === "questions"} onClick={() => setTab("questions")} icon={BookOpen} label={`Interview questions (${QUESTION_BANK.length})`} />
         <Tab2 active={tab === "concepts"} onClick={() => setTab("concepts")} icon={BrainCircuit} label={`Concept MCQs (${mcqF.total})`} />
         <Tab2 active={tab === "attempts"} onClick={() => setTab("attempts")} icon={FileText} label={`Attempts (${attempts.length})`} />
+        <Tab2 active={tab === "users"} onClick={() => setTab("users")} icon={Users} label="Users & Activity" />
       </div>
 
       {tab === "questions" ? (
@@ -165,6 +176,72 @@ export default function AdminPage() {
             ))}
           </div>
         </>
+      ) : tab === "users" ? (
+        <div className="mt-6">
+          {analyticsLoading && <p className="text-ink-muted">Loading analytics…</p>}
+          {!analyticsLoading && analytics && (
+            <>
+              {/* KV not configured */}
+              {analytics.totalUsers === 0 && analytics.recentLogins.length === 0 && (
+                <div className="glass rounded-2xl p-6 text-center text-ink-secondary">
+                  <p className="font-medium">No data yet.</p>
+                  <p className="mt-1 text-sm text-ink-muted">User analytics require Vercel KV. Connect a KV store in your Vercel project and redeploy, or wait for the first Google sign-in after KV is set up.</p>
+                </div>
+              )}
+
+              {/* Stat cards */}
+              {analytics.totalUsers > 0 && (
+                <>
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <StatCard icon={Users} label="Total users" value={String(analytics.totalUsers)} />
+                    <StatCard icon={Activity} label="Active today" value={String(analytics.activeToday)} />
+                    <StatCard icon={Clock} label="Active this week" value={String(analytics.activeThisWeek)} />
+                    <StatCard icon={LogIn} label="Recent logins" value={String(analytics.recentLogins.length)} />
+                  </div>
+
+                  {/* User table */}
+                  <div className="glass mt-6 overflow-hidden rounded-2xl">
+                    <div className="border-b border-hair px-5 py-3 text-xs font-semibold uppercase tracking-wider text-ink-muted grid grid-cols-12 gap-2">
+                      <span className="col-span-4">User</span>
+                      <span className="col-span-3">Email</span>
+                      <span className="col-span-2 text-right">Logins</span>
+                      <span className="col-span-3 text-right">Last seen</span>
+                    </div>
+                    {analytics.users.map((u) => (
+                      <div key={u.id} className="grid grid-cols-12 gap-2 items-center border-b border-hair/50 px-5 py-3 last:border-0 hover:bg-white/[0.02] transition">
+                        <div className="col-span-4 flex items-center gap-2">
+                          {u.image
+                            ? <Image src={u.image} alt={u.name} width={28} height={28} className="rounded-full shrink-0" />
+                            : <div className="h-7 w-7 rounded-full btn-accent grid place-items-center text-xs font-bold shrink-0">{u.name[0]}</div>
+                          }
+                          <span className="truncate text-sm text-ink-primary">{u.name}</span>
+                        </div>
+                        <span className="col-span-3 truncate text-sm text-ink-secondary">{u.email}</span>
+                        <span className="col-span-2 text-right text-sm font-semibold accent-text">{u.loginCount}</span>
+                        <span className="col-span-3 text-right text-xs text-ink-muted">{timeAgo(u.lastLoginAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Recent login feed */}
+                  <div className="glass mt-6 rounded-2xl p-5">
+                    <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-secondary">Recent login activity</h2>
+                    <div className="space-y-2">
+                      {analytics.recentLogins.slice(0, 20).map((e, i) => (
+                        <div key={i} className="flex items-center gap-3 text-sm">
+                          <LogIn className="h-3.5 w-3.5 shrink-0 text-ink-muted" />
+                          <span className="font-medium text-ink-primary">{e.name}</span>
+                          <span className="text-ink-muted truncate">{e.email}</span>
+                          <span className="ml-auto shrink-0 text-xs text-ink-muted">{timeAgo(e.at)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       ) : (
         <div className="mt-4 space-y-2">
           {attempts.length === 0 && <p className="text-ink-muted">No attempts recorded on this device yet.</p>}
@@ -222,4 +299,23 @@ function Select({ value, onChange, options, labels, truncate }: { value: string;
 }
 function Tag({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return <span className={`rounded-full px-2 py-0.5 ${accent ? "bg-[color:var(--accent)]/15 text-[color:var(--accent)]" : "bg-white/[0.06] text-ink-muted"}`}>{children}</span>;
+}
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className="flex items-center gap-2 text-xs text-ink-muted"><Icon className="h-3.5 w-3.5" />{label}</div>
+      <div className="mt-2 text-3xl font-bold accent-text">{value}</div>
+    </div>
+  );
+}
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString();
 }
