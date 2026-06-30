@@ -123,6 +123,17 @@ export const DISCIPLINES: Discipline[] = [
       { id: "opsmgr", label: "Operations Manager", focusAreas: ["People Leadership", "Process", "Analytics", "Behavioral"] },
     ],
   },
+  {
+    id: "qa",
+    label: "Quality Assurance",
+    icon: "ShieldCheck",
+    roles: [
+      { id: "qae", label: "QA Engineer", focusAreas: ["Test Planning", "Manual Testing", "Bug Mgmt", "Behavioral"] },
+      { id: "sdet", label: "SDET / Automation Engineer", focusAreas: ["Test Automation", "Coding", "CI/CD Integration", "Behavioral"] },
+      { id: "performance", label: "Performance / Load Test Engineer", focusAreas: ["Performance Testing", "Tools & Scripting", "Analysis", "Behavioral"] },
+      { id: "qalead", label: "QA Lead / Manager", focusAreas: ["People Leadership", "Quality Strategy", "Process Design", "Behavioral"] },
+    ],
+  },
 ];
 
 // Leveled competency set for a (discipline, role, seniority). Used to seed
@@ -139,6 +150,7 @@ export function competenciesFor(disciplineId: string, roleId: string, seniorityI
     sales: ["Discovery", "Objection Handling", "Business Acumen", "Communication", "Resilience"],
     marketing: ["Marketing Strategy", "Analytical Thinking", "Creativity & Messaging", "Communication", "Execution"],
     operations: ["Analytical Problem Solving", "Process & Execution", "Cross-functional Influence", "Communication", "Prioritization"],
+    qa: ["Test Planning", "Technical Skill", "Quality Mindset", "Communication", "Attention to Detail"],
   };
   const set = [...(base[disciplineId] ?? base.engineering)];
   if (isLeader) set.push("People Leadership", "Strategic Thinking");
