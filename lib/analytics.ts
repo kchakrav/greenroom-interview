@@ -24,7 +24,10 @@ const RECENT_LOGINS_KEY = "aii:recent-logins";
 const MAX_RECENT = 100;
 
 function hasKV(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+  return !!(
+    (process.env.KV_REST_API_URL || process.env.db_KV_REST_API_URL) &&
+    (process.env.KV_REST_API_TOKEN || process.env.db_KV_REST_API_TOKEN)
+  );
 }
 
 async function getKV() {
