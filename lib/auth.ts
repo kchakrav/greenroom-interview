@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -7,16 +8,35 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    // Admin bypass — password-only, no Google account needed.
+    CredentialsProvider({
+      id: "admin-password",
+      name: "Admin",
+      credentials: { password: { label: "Admin password", type: "password" } },
+      authorize(credentials) {
+        const adminPassword = process.env.ADMIN_PASSWORD;
+        if (!adminPassword) return null;
+        if (credentials?.password !== adminPassword) return null;
+        return { id: "admin", name: "Admin", email: "admin@local", isAdmin: true } as any;
+      },
+    }),
   ],
+  pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   callbacks: {
-    jwt({ token, account }) {
-      // On first sign-in, `account` is present — persist the stable Google user ID.
+    jwt({ token, account, user }) {
       if (account) token.sub = account.providerAccountId;
+      if ((user as any)?.isAdmin) {
+        token.isAdmin = true;
+        token.sub = "admin";
+      }
       return token;
     },
     session({ session, token }) {
-      if (session.user) session.user.id = token.sub as string;
+      if (session.user) {
+        session.user.id = token.sub as string;
+        (session.user as any).isAdmin = token.isAdmin ?? false;
+      }
       return session;
     },
   },
