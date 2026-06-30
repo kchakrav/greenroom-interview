@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import * as Icons from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useStage } from "@/lib/useStage";
 import { DISCIPLINES, SENIORITIES, TONES, lookup } from "@/lib/taxonomy";
 import Nav from "@/components/Nav";
@@ -24,6 +25,8 @@ export default function Onboarding() {
   const router = useRouter();
   const { config, set } = useStage();
   const { discipline, role } = lookup(config.disciplineId, config.roleId, config.seniorityId);
+  const { data: session } = useSession();
+  const firstName = session?.user?.name?.split(" ")[0];
 
   useEffect(() => {
     const t = TONES.find((t) => t.id === config.tone)!;
@@ -51,7 +54,13 @@ export default function Onboarding() {
         <PracticeCard icon="Mic" title="Mock interview" blurb="Full adaptive interview. Set it up below ↓" highlight />
       </div>
 
-      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-12 text-4xl font-bold tracking-tight md:text-5xl">
+      {firstName && (
+        <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-ink-secondary">
+          Welcome back, <span className="font-semibold text-ink-primary">{firstName}</span>. Ready to practice?
+        </motion.p>
+      )}
+
+      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
         Set the <span className="accent-text">stage</span>.
       </motion.h1>
       <p className="mt-3 max-w-xl text-ink-secondary">

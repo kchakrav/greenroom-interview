@@ -19,16 +19,24 @@ export default function UserMenu() {
     );
   }
 
+  const firstName = session.user.name?.split(" ")[0] ?? session.user.name;
+
   return (
     <div className="glass flex items-center gap-3 rounded-full px-3 py-1.5 text-sm">
-      {session.user.image ? (
-        <Image src={session.user.image} alt={session.user.name ?? ""} width={24} height={24} className="rounded-full" />
-      ) : (
-        <div className="h-6 w-6 rounded-full btn-accent grid place-items-center text-xs font-bold">
-          {session.user.name?.[0] ?? "?"}
+      <div className="relative group">
+        {session.user.image ? (
+          <Image src={session.user.image} alt={session.user.name ?? ""} width={24} height={24} className="rounded-full cursor-default" />
+        ) : (
+          <div className="h-6 w-6 rounded-full btn-accent grid place-items-center text-xs font-bold cursor-default">
+            {session.user.name?.[0] ?? "?"}
+          </div>
+        )}
+        {/* Tooltip on hover */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg bg-white/10 backdrop-blur px-2.5 py-1 text-xs text-ink-primary opacity-0 group-hover:opacity-100 transition pointer-events-none">
+          {firstName}
         </div>
-      )}
-      <span className="hidden text-ink-secondary sm:block max-w-[120px] truncate">{session.user.name}</span>
+      </div>
+      <span className="hidden text-ink-secondary sm:block max-w-[120px] truncate">{firstName}</span>
       <button onClick={() => signOut()} className="text-ink-muted hover:text-ink-primary transition text-xs">
         Sign out
       </button>
