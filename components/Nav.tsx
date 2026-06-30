@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Dumbbell, Map, LineChart, Mic, GraduationCap, Database, Library } from "lucide-react";
 import { loadProgress, xpForLevel, type Progress } from "@/components/gamify";
+import UserMenu from "@/components/UserMenu";
 
 const LINKS = [
   { href: "/", label: "Practice", icon: Mic },
@@ -42,15 +43,18 @@ export default function Nav() {
           })}
         </nav>
       </div>
-      {p && (
-        <div className="glass flex items-center gap-4 rounded-full px-4 py-2 text-sm">
-          <span className="text-ink-secondary">Lvl <b className="text-ink-primary">{p.level}</b></span>
-          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full btn-accent" style={{ width: `${Math.min(100, (p.xp / xpForLevel(p.level)) * 100)}%` }} />
+      <div className="flex items-center gap-3">
+        {p && (
+          <div className="glass flex items-center gap-4 rounded-full px-4 py-2 text-sm">
+            <span className="text-ink-secondary">Lvl <b className="text-ink-primary">{p.level}</b></span>
+            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full btn-accent" style={{ width: `${Math.min(100, (p.xp / xpForLevel(p.level)) * 100)}%` }} />
+            </div>
+            <span className="text-ink-secondary">🔥 {p.streak}d</span>
           </div>
-          <span className="text-ink-secondary">🔥 {p.streak}d</span>
-        </div>
-      )}
+        )}
+        <UserMenu />
+      </div>
     </header>
   );
 }

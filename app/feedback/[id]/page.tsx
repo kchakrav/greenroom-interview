@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Award, TrendingUp, ShieldCheck, Loader2 } from "lucide-react";
@@ -13,6 +14,8 @@ import { lookup } from "@/lib/taxonomy";
 import type { InterviewSession, ScoreReport } from "@/lib/types";
 
 export default function Feedback({ params }: { params: { id: string } }) {
+  const { data: authSession } = useSession();
+  const userId = authSession?.user?.id ?? null;
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -41,7 +44,7 @@ export default function Feedback({ params }: { params: { id: string } }) {
         competencies: rep.competencies.map((c) => ({ competency: c.competency, score: c.score })),
         drill: s.config.drill?.competency,
         pathId: s.config.pathStep?.pathId,
-      });
+      }, userId);
       if (s.config.pathStep) markStepComplete(s.config.pathStep.pathId, s.config.pathStep.stepIndex);
     }
   }, [params.id]);

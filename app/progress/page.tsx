@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus, Award } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Nav from "@/components/Nav";
 import SkillRadar from "@/components/SkillRadar";
 import { loadHistory, improvement, bestByCompetency } from "@/lib/history";
@@ -10,9 +11,11 @@ import { loadProgress, type Progress } from "@/components/gamify";
 import type { AttemptSummary } from "@/lib/types";
 
 export default function ProgressPage() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? null;
   const [h, setH] = useState<AttemptSummary[]>([]);
   const [p, setP] = useState<Progress | null>(null);
-  useEffect(() => { setH(loadHistory()); setP(loadProgress()); }, []);
+  useEffect(() => { setH(loadHistory(userId)); setP(loadProgress()); }, [userId]);
 
   const imp = improvement(h);
   const best = bestByCompetency(h);

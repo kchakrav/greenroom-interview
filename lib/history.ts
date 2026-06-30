@@ -3,23 +3,27 @@
 // learning-path step completion. Stored in localStorage (serverless-friendly).
 import type { AttemptSummary } from "./types";
 
-const KEY = "aii-history";
+const BASE_KEY = "aii-history";
 
-export function loadHistory(): AttemptSummary[] {
+function historyKey(userId?: string | null): string {
+  return userId ? `${BASE_KEY}-${userId}` : BASE_KEY;
+}
+
+export function loadHistory(userId?: string | null): AttemptSummary[] {
   if (typeof window === "undefined") return [];
   try {
-    return (JSON.parse(localStorage.getItem(KEY) || "[]") as AttemptSummary[]).sort((a, b) => a.at - b.at);
+    return (JSON.parse(localStorage.getItem(historyKey(userId)) || "[]") as AttemptSummary[]).sort((a, b) => a.at - b.at);
   } catch {
     return [];
   }
 }
 
-export function addAttempt(a: AttemptSummary): void {
+export function addAttempt(a: AttemptSummary, userId?: string | null): void {
   try {
-    const all = loadHistory();
+    const all = loadHistory(userId);
     if (all.some((x) => x.id === a.id)) return; // idempotent
     all.push(a);
-    localStorage.setItem(KEY, JSON.stringify(all));
+    localStorage.setItem(historyKey(userId), JSON.stringify(all));
   } catch {
     /* ignore */
   }
