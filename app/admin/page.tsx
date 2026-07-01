@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check, Users, Activity, Clock, LogIn } from "lucide-react";
 import Image from "next/image";
 import Nav from "@/components/Nav";
-import { QUESTION_BANK, queryBank, bankFacets, type QType } from "@/lib/questionBank";
-import { queryMCQ, mcqFacets } from "@/lib/quiz";
+import { QUESTION_BANK, queryBank, bankFacets, type BankQuestion, type QType } from "@/lib/questionBank";
+import { queryMCQ, mcqFacets, type MCQ } from "@/lib/quiz";
 import { SENIORITIES, lookup } from "@/lib/taxonomy";
 import { loadHistory } from "@/lib/history";
 import { getClientSession } from "@/lib/clientSession";
@@ -13,6 +13,7 @@ import type { AttemptSummary } from "@/lib/types";
 import type { UserRecord, LoginEvent } from "@/lib/analytics";
 
 type Tab = "questions" | "concepts" | "attempts" | "users";
+const PAGE_SIZE = 25;
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("questions");
@@ -25,6 +26,10 @@ export default function AdminPage() {
   const [source, setSource] = useState("all");
   const [mTopic, setMTopic] = useState("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [questionPage, setQuestionPage] = useState(1);
+  const [conceptPage, setConceptPage] = useState(1);
+  const [attemptPage, setAttemptPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
   const [analytics, setAnalytics] = useState<{ users: UserRecord[]; recentLogins: LoginEvent[]; totalUsers: number; activeToday: number; activeThisWeek: number } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -45,6 +50,16 @@ export default function AdminPage() {
     () => queryMCQ({ q, disciplineId: discipline, topic: mTopic, source }),
     [q, discipline, mTopic, source]
   );
+  const questionPageItems = useMemo(() => pageItems(results, questionPage, PAGE_SIZE), [results, questionPage]);
+  const conceptPageItems = useMemo(() => pageItems(mcqResults, conceptPage, PAGE_SIZE), [mcqResults, conceptPage]);
+  const reversedAttempts = useMemo(() => [...attempts].reverse(), [attempts]);
+  const attemptPageItems = useMemo(() => pageItems(reversedAttempts, attemptPage, PAGE_SIZE), [reversedAttempts, attemptPage]);
+  const userPageItems = useMemo(() => pageItems(analytics?.users ?? [], userPage, PAGE_SIZE), [analytics?.users, userPage]);
+
+  useEffect(() => setQuestionPage(1), [q, discipline, level, type, source]);
+  useEffect(() => setConceptPage(1), [q, discipline, mTopic, source]);
+  useEffect(() => setAttemptPage(1), [attempts]);
+  useEffect(() => setUserPage(1), [analytics?.users]);
 
   function exportJSON() {
     const data = tab === "questions"
@@ -69,6 +84,48 @@ export default function AdminPage() {
       download(toCSV(rows), "greenroom-attempts.csv", "text/csv");
     }
   }
+  async function exportExcelByTopic() {
+    if (tab !== "questions" && tab !== "concepts") return;
+    const groups = groupedExportRows(tab, results, mcqResults);
+    if (groups.length === 0) {
+      download(excelWorkbook([{ name: "No results", rows: [["No results for the current filters"]], widths: [40], pdfColumnStyles: {} }]), `greenroom-${tab}-by-topic.xls`, "application/vnd.ms-excel");
+      return;
+    }
+    download(excelWorkbook(groups), `greenroom-${tab}-by-topic.xls`, "application/vnd.ms-excel");
+  }
+  async function exportPDFByTopic() {
+    if (tab !== "questions" && tab !== "concepts") return;
+    const [{ default: jsPDF }, autoTableModule] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
+    const autoTable = (autoTableModule as any).default ?? autoTableModule;
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const groups = groupedExportRows(tab, results, mcqResults);
+    doc.setFontSize(14);
+    doc.text(`GreenRoom ${tab === "questions" ? "Interview Questions" : "Concept MCQs"} by Topic`, 40, 36);
+    if (groups.length === 0) {
+      doc.setFontSize(11);
+      doc.text("No results for the current filters.", 40, 64);
+      doc.save(`greenroom-${tab}-by-topic.pdf`);
+      return;
+    }
+    groups.forEach((group, idx) => {
+      if (idx > 0) doc.addPage();
+      doc.setFontSize(12);
+      doc.text(`${group.name} (${group.rows.length - 1})`, 40, 60);
+      autoTable(doc, {
+        head: [group.rows[0]],
+        body: group.rows.slice(1),
+        startY: 78,
+        styles: { fontSize: 7, cellPadding: 3, overflow: "linebreak" },
+        headStyles: { fillColor: [110, 139, 255], textColor: [7, 9, 15] },
+        columnStyles: group.pdfColumnStyles,
+        margin: { left: 30, right: 30 },
+      });
+    });
+    doc.save(`greenroom-${tab}-by-topic.pdf`);
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -85,6 +142,12 @@ export default function AdminPage() {
         <div className="flex gap-2">
           <button onClick={exportJSON} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> JSON</button>
           <button onClick={exportCSV} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> CSV</button>
+          {(tab === "questions" || tab === "concepts") && (
+            <>
+              <button onClick={exportExcelByTopic} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> Excel by topic</button>
+              <button onClick={exportPDFByTopic} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> PDF by topic</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -107,10 +170,13 @@ export default function AdminPage() {
             <Select value={source} onChange={setSource} options={["all", ...facets.sources]} truncate />
           </div>
 
-          <p className="mt-3 text-sm text-ink-muted">{results.length} result{results.length === 1 ? "" : "s"}</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-ink-muted">{results.length} result{results.length === 1 ? "" : "s"}</p>
+            <Pagination page={questionPage} total={results.length} pageSize={PAGE_SIZE} onPage={setQuestionPage} />
+          </div>
 
           <div className="mt-2 space-y-2">
-            {results.map((b) => (
+            {questionPageItems.map((b) => (
               <div key={b.id} className="glass rounded-2xl">
                 <button onClick={() => setOpen((o) => ({ ...o, [b.id]: !o[b.id] }))} className="flex w-full items-start gap-3 p-4 text-left">
                   {open[b.id] ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted" />}
@@ -135,6 +201,7 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+          <Pagination className="mt-4 justify-end" page={questionPage} total={results.length} pageSize={PAGE_SIZE} onPage={setQuestionPage} />
         </>
       ) : tab === "concepts" ? (
         <>
@@ -145,9 +212,12 @@ export default function AdminPage() {
             <Select value={mTopic} onChange={setMTopic} options={["all", ...mcqF.topics]} truncate />
             <Select value={source} onChange={setSource} options={["all", ...mcqF.sources]} truncate />
           </div>
-          <p className="mt-3 text-sm text-ink-muted">{mcqResults.length} result{mcqResults.length === 1 ? "" : "s"}</p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-ink-muted">{mcqResults.length} result{mcqResults.length === 1 ? "" : "s"}</p>
+            <Pagination page={conceptPage} total={mcqResults.length} pageSize={PAGE_SIZE} onPage={setConceptPage} />
+          </div>
           <div className="mt-2 space-y-2">
-            {mcqResults.map((m) => (
+            {conceptPageItems.map((m) => (
               <div key={m.id} className="glass rounded-2xl">
                 <button onClick={() => setOpen((o) => ({ ...o, [m.id]: !o[m.id] }))} className="flex w-full items-start gap-3 p-4 text-left">
                   {open[m.id] ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted" />}
@@ -175,6 +245,7 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+          <Pagination className="mt-4 justify-end" page={conceptPage} total={mcqResults.length} pageSize={PAGE_SIZE} onPage={setConceptPage} />
         </>
       ) : tab === "users" ? (
         <div className="mt-6">
@@ -207,7 +278,7 @@ export default function AdminPage() {
                       <span className="col-span-2 text-right">Logins</span>
                       <span className="col-span-3 text-right">Last seen</span>
                     </div>
-                    {analytics.users.map((u) => (
+                    {userPageItems.map((u) => (
                       <div key={u.id} className="grid grid-cols-12 gap-2 items-center border-b border-hair/50 px-5 py-3 last:border-0 hover:bg-white/[0.02] transition">
                         <div className="col-span-4 flex items-center gap-2">
                           {u.image
@@ -222,6 +293,7 @@ export default function AdminPage() {
                       </div>
                     ))}
                   </div>
+                  <Pagination className="mt-4 justify-end" page={userPage} total={analytics.users.length} pageSize={PAGE_SIZE} onPage={setUserPage} />
 
                   {/* Recent login feed */}
                   <div className="glass mt-6 rounded-2xl p-5">
@@ -245,7 +317,10 @@ export default function AdminPage() {
       ) : (
         <div className="mt-4 space-y-2">
           {attempts.length === 0 && <p className="text-ink-muted">No attempts recorded on this device yet.</p>}
-          {[...attempts].reverse().map((a) => {
+          {attempts.length > 0 && (
+            <Pagination className="justify-end" page={attemptPage} total={reversedAttempts.length} pageSize={PAGE_SIZE} onPage={setAttemptPage} />
+          )}
+          {attemptPageItems.map((a) => {
             const s = getClientSession(a.id);
             return (
               <div key={a.id} className="glass rounded-2xl">
@@ -267,6 +342,9 @@ export default function AdminPage() {
               </div>
             );
           })}
+          {attempts.length > 0 && (
+            <Pagination className="justify-end pt-2" page={attemptPage} total={reversedAttempts.length} pageSize={PAGE_SIZE} onPage={setAttemptPage} />
+          )}
         </div>
       )}
     </main>
@@ -282,6 +360,111 @@ function download(content: string, filename: string, mime: string) {
 }
 function toCSV(rows: string[][]) {
   return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+}
+type ExportGroup = {
+  name: string;
+  rows: string[][];
+  widths: number[];
+  pdfColumnStyles: Record<number, { cellWidth: number }>;
+};
+function groupedExportRows(tab: "questions" | "concepts", questions: BankQuestion[], concepts: MCQ[]): ExportGroup[] {
+  if (tab === "questions") {
+    return groupBy(questions, (q) => q.competency).map(([name, items]) => ({
+      name,
+      rows: [
+        ["id", "discipline", "topic", "levels", "type", "difficulty", "source", "prompt", "guidance"],
+        ...items.map((q) => [q.id, q.disciplineId, q.competency, q.levels.join(", "), q.type, String(q.difficulty), q.source, q.prompt, q.guidance]),
+      ],
+      widths: [24, 16, 28, 24, 14, 10, 28, 80, 90],
+      pdfColumnStyles: {
+        0: { cellWidth: 58 },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 80 },
+        3: { cellWidth: 70 },
+        4: { cellWidth: 45 },
+        5: { cellWidth: 36 },
+        6: { cellWidth: 85 },
+        7: { cellWidth: 170 },
+        8: { cellWidth: 180 },
+      },
+    }));
+  }
+  return groupBy(concepts, (m) => m.topic).map(([name, items]) => ({
+    name,
+    rows: [
+      ["id", "discipline", "topic", "source", "question", "options", "correct", "explanation"],
+      ...items.map((m) => [m.id, m.disciplineId, m.topic, m.source, m.question, m.options.join(" | "), m.options[m.correctIndex], m.explanation]),
+    ],
+    widths: [28, 16, 28, 28, 80, 80, 40, 90],
+    pdfColumnStyles: {
+      0: { cellWidth: 58 },
+      1: { cellWidth: 55 },
+      2: { cellWidth: 80 },
+      3: { cellWidth: 85 },
+      4: { cellWidth: 170 },
+      5: { cellWidth: 145 },
+      6: { cellWidth: 80 },
+      7: { cellWidth: 110 },
+    },
+  }));
+}
+function excelWorkbook(groups: ExportGroup[]) {
+  const usedSheetNames = new Set<string>();
+  const worksheets = groups.map((group) => {
+    const columns = group.widths.map((width) => `<Column ss:Width="${Math.max(60, width * 6)}"/>`).join("");
+    const rows = group.rows.map((row, rowIndex) => {
+      const cells = row.map((cell) => `<Cell><Data ss:Type="String">${xmlEscape(cell)}</Data></Cell>`).join("");
+      const style = rowIndex === 0 ? ' ss:StyleID="header"' : "";
+      return `<Row${style}>${cells}</Row>`;
+    }).join("");
+    return `<Worksheet ss:Name="${xmlEscape(uniqueSheetName(group.name, usedSheetNames))}"><Table>${columns}${rows}</Table></Worksheet>`;
+  }).join("");
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#DCE3FF" ss:Pattern="Solid"/></Style>
+ </Styles>
+ ${worksheets}
+</Workbook>`;
+}
+function groupBy<T>(items: T[], keyFn: (item: T) => string): [string, T[]][] {
+  const groups = new Map<string, T[]>();
+  items.forEach((item) => {
+    const key = keyFn(item) || "Uncategorized";
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  });
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+function sheetName(name: string) {
+  return name.replace(/[\\/?*[\]:]/g, " ").replace(/\s+/g, " ").trim().slice(0, 31) || "Topic";
+}
+function uniqueSheetName(name: string, used: Set<string>) {
+  const base = sheetName(name);
+  let candidate = base;
+  let suffix = 2;
+  while (used.has(candidate)) {
+    const tail = ` ${suffix}`;
+    candidate = `${base.slice(0, 31 - tail.length)}${tail}`;
+    suffix += 1;
+  }
+  used.add(candidate);
+  return candidate;
+}
+function xmlEscape(value: string) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+function pageItems<T>(items: T[], page: number, pageSize: number): T[] {
+  return items.slice((page - 1) * pageSize, page * pageSize);
 }
 function Tab2({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
   return (
@@ -299,6 +482,20 @@ function Select({ value, onChange, options, labels, truncate }: { value: string;
 }
 function Tag({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return <span className={`rounded-full px-2 py-0.5 ${accent ? "bg-[color:var(--accent)]/15 text-[color:var(--accent)]" : "bg-white/[0.06] text-ink-muted"}`}>{children}</span>;
+}
+function Pagination({ page, total, pageSize, onPage, className = "" }: { page: number; total: number; pageSize: number; onPage: (page: number) => void; className?: string }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  if (pages <= 1) return null;
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(total, page * pageSize);
+  return (
+    <div className={`flex items-center gap-2 text-xs text-ink-muted ${className}`}>
+      <span>{start}-{end} of {total}</span>
+      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className="glass-strong rounded-full px-3 py-1 disabled:opacity-40">Prev</button>
+      <span>Page {page} / {pages}</span>
+      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className="glass-strong rounded-full px-3 py-1 disabled:opacity-40">Next</button>
+    </div>
+  );
 }
 function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (

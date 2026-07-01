@@ -14,16 +14,16 @@ export async function POST(req: NextRequest) {
       topic?: string;
       count?: number;
     };
-    const n = Math.min(Math.max(count ?? 6, 3), 10);
-    // The AI/ML area is a curated, source-attributed knowledge base — always
-    // serve it from the bank (don't generate). With a key, top up with freshly
-    // generated questions on the chosen topic for variety/recency.
+    const n = Math.min(Math.max(count ?? 6, 3), 120);
+    // Product and AI/ML have deep, source-attributed banks. Serve those directly
+    // so 100-question learning sets use the curated coverage instead of making
+    // a very large live model-generation request.
     let questions;
-    if (disciplineId === "aiml") {
+    if (disciplineId === "aiml" || disciplineId === "product") {
       questions = quizQuestions({ disciplineId, topic }, n);
       if (!demoMode() && questions.length < n) {
         try {
-          const gen = await generateQuiz("AI/ML", topic ?? "", n - questions.length);
+          const gen = await generateQuiz(disciplineId === "aiml" ? "AI/ML" : "Product Management", topic ?? "", n - questions.length);
           questions = [...questions, ...gen];
         } catch { /* bank is enough */ }
       }

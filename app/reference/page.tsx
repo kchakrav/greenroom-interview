@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,13 +27,14 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<any> }[] = [
 
 const cats = (items: RefEntry[]) =>
   ["all", ...Array.from(new Set(items.flatMap((i) => i.tags)))];
+const PAGE_SIZE = 25;
 
 export default function ReferencePage() {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>("faq");
 
-  const pmQuestions = QUESTION_BANK.filter((q) => q.disciplineId === "product");
-  const aiQuestions = QUESTION_BANK.filter((q) => q.disciplineId === "aiml");
+  const pmQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "product"), []);
+  const aiQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "aiml"), []);
   const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length;
 
   return (
@@ -128,6 +129,7 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
   const allCats = useMemo(() => cats(items), [items]);
 
@@ -137,6 +139,8 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
     if (!s) return true;
     return it.q.toLowerCase().includes(s) || it.a.toLowerCase().includes(s) || (it.extra || "").toLowerCase().includes(s);
   });
+  const pageShown = pageItems(shown, page, PAGE_SIZE);
+  useEffect(() => setPage(1), [q, cat, items]);
 
   return (
     <div>
@@ -165,9 +169,13 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
         ))}
       </div>
 
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-ink-muted">{shown.length} result{shown.length === 1 ? "" : "s"}</div>
+        <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
+      </div>
       <div className="mt-4 space-y-2">
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No results found.</div>}
-        {shown.map((it) => {
+        {pageShown.map((it) => {
           const isOpen = open === it.id;
           return (
             <div key={it.id} className="glass overflow-hidden rounded-2xl">
@@ -216,6 +224,7 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
           );
         })}
       </div>
+      <Pagination className="mt-4 justify-end" page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
     </div>
   );
 }
@@ -223,6 +232,7 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
 function QuestionList({ items, placeholder }: { items: BankQuestion[]; placeholder: string }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
   const allCats = useMemo(() => ["all", ...Array.from(new Set(items.map((i) => i.competency))).sort()], [items]);
 
@@ -232,6 +242,8 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
     if (!s) return true;
     return it.prompt.toLowerCase().includes(s) || it.guidance.toLowerCase().includes(s) || it.source.toLowerCase().includes(s) || it.competency.toLowerCase().includes(s);
   });
+  const pageShown = pageItems(shown, page, PAGE_SIZE);
+  useEffect(() => setPage(1), [q, cat, items]);
 
   return (
     <div>
@@ -254,10 +266,13 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
           </button>
         ))}
       </div>
-      <div className="mt-4 text-xs text-ink-muted">{shown.length} of {items.length} questions</div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-ink-muted">{shown.length} of {items.length} questions</div>
+        <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
+      </div>
       <div className="mt-4 space-y-2">
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No results found.</div>}
-        {shown.map((it) => {
+        {pageShown.map((it) => {
           const isOpen = open === it.id;
           return (
             <div key={it.id} className="glass overflow-hidden rounded-2xl">
@@ -292,17 +307,21 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
           );
         })}
       </div>
+      <Pagination className="mt-4 justify-end" page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
     </div>
   );
 }
 
 function Papers() {
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const shown = REF_PAPERS.filter((p) => {
     const s = q.toLowerCase().trim();
     if (!s) return true;
     return p.title.toLowerCase().includes(s) || p.desc.toLowerCase().includes(s) || p.authors.toLowerCase().includes(s);
   });
+  const pageShown = pageItems(shown, page, PAGE_SIZE);
+  useEffect(() => setPage(1), [q]);
   return (
     <div>
       <div className="relative">
@@ -312,8 +331,11 @@ function Papers() {
           className="glass w-full rounded-xl py-2.5 pl-10 pr-4 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none"
         />
       </div>
+      <div className="mt-4 flex justify-end">
+        <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
+      </div>
       <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-        {shown.map((p) => (
+        {pageShown.map((p) => (
           <a key={p.id} href={p.url} target="_blank" rel="noreferrer" className="glass group flex flex-col rounded-2xl p-4 transition hover:ring-2 hover:ring-accent">
             <div className="flex items-start justify-between gap-2">
               <FileText className="h-5 w-5 text-accent" />
@@ -333,17 +355,21 @@ function Papers() {
           </a>
         ))}
       </div>
+      <Pagination className="mt-4 justify-end" page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
     </div>
   );
 }
 
 function Acronyms() {
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const shown = REF_ACRONYMS.filter((a) => {
     const s = q.toLowerCase().trim();
     if (!s) return true;
     return a.code.toLowerCase().includes(s) || a.full.toLowerCase().includes(s) || a.pm_note.toLowerCase().includes(s);
   });
+  const pageShown = pageItems(shown, page, PAGE_SIZE);
+  useEffect(() => setPage(1), [q]);
   return (
     <div>
       <div className="relative">
@@ -353,8 +379,11 @@ function Acronyms() {
           className="glass w-full rounded-xl py-2.5 pl-10 pr-4 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none"
         />
       </div>
+      <div className="mt-4 flex justify-end">
+        <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
+      </div>
       <div className="mt-4 overflow-hidden rounded-2xl border border-hair">
-        {shown.map((a, i) => (
+        {pageShown.map((a, i) => (
           <div key={a.id} className={`flex flex-col gap-1 px-4 py-3 transition hover:bg-white/[0.03] sm:flex-row sm:gap-4 ${i > 0 ? "border-t border-hair" : ""}`}>
             <div className="w-20 shrink-0 font-mono text-sm font-semibold text-accent">{a.code}</div>
             <div className="flex-1">
@@ -367,6 +396,26 @@ function Acronyms() {
         ))}
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No matches.</div>}
       </div>
+      <Pagination className="mt-4 justify-end" page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
+    </div>
+  );
+}
+
+function pageItems<T>(items: T[], page: number, pageSize: number): T[] {
+  return items.slice((page - 1) * pageSize, page * pageSize);
+}
+
+function Pagination({ page, total, pageSize, onPage, className = "" }: { page: number; total: number; pageSize: number; onPage: (page: number) => void; className?: string }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  if (pages <= 1) return null;
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(total, page * pageSize);
+  return (
+    <div className={`flex items-center gap-2 text-xs text-ink-muted ${className}`}>
+      <span>{start}-{end} of {total}</span>
+      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className="glass-strong rounded-full px-3 py-1 disabled:opacity-40">Prev</button>
+      <span>Page {page} / {pages}</span>
+      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className="glass-strong rounded-full px-3 py-1 disabled:opacity-40">Next</button>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import type { MCQ } from "@/lib/quiz";
 type Phase = "setup" | "loading" | "quiz" | "done";
 
 const AREAS = DISCIPLINES.map((d) => ({ id: d.id, label: d.label }));
+const LEARN_QUESTION_COUNT = 100;
 
 export default function LearnPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function LearnPage() {
     try {
       const r = await fetch("/api/quiz", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disciplineId, topic, count: 6 }),
+        body: JSON.stringify({ disciplineId, topic, count: LEARN_QUESTION_COUNT }),
       });
       const d = await r.json();
       if (!r.ok || !d.questions?.length) throw new Error(d.error || "No questions found for that selection.");
@@ -71,7 +72,7 @@ export default function LearnPage() {
       <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight md:text-4xl">
         <GraduationCap className="h-7 w-7" style={{ color: "var(--accent)" }} /> Learn the <span className="accent-text">concepts</span>.
       </h1>
-      <p className="mt-2 text-ink-secondary">Quick multiple-choice questions to build your foundation before you interview. Totally optional — learn at your pace.</p>
+      <p className="mt-2 text-ink-secondary">Deep 100-question concept sets to build your foundation before you interview. Totally optional — learn at your pace.</p>
 
       {phase === "setup" && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass mt-8 rounded-3xl p-8">
@@ -87,7 +88,7 @@ export default function LearnPage() {
             {topics.map((t) => <Chip key={t} active={topic === t} onClick={() => setTopic(t)}>{t}</Chip>)}
           </div>
           {err && <p className="mt-4 text-sm text-signal-bad">{err}</p>}
-          <button onClick={start} className="btn-accent mt-7 rounded-full px-8 py-3">Start learning →</button>
+          <button onClick={start} className="btn-accent mt-7 rounded-full px-8 py-3">Start 100-question set →</button>
         </motion.div>
       )}
 
