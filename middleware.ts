@@ -3,8 +3,10 @@ import { withAuth } from "next-auth/middleware";
 export default withAuth({
   pages: { signIn: "/login" },
   callbacks: {
-    authorized({ token }) {
-      // Any valid session (Google or admin password) gets through.
+    authorized({ token, req }) {
+      if (req.nextUrl.pathname.startsWith("/admin") || req.nextUrl.pathname.startsWith("/api/admin")) {
+        return Boolean((token as any)?.isAdmin);
+      }
       return !!token;
     },
   },

@@ -6,6 +6,7 @@ import { getAnalytics } from "@/lib/analytics";
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(session.user as any)?.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const data = await getAnalytics();
   return NextResponse.json(data);

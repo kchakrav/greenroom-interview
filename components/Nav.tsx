@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Dumbbell, Map, LineChart, Mic, GraduationCap, Database, Library } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { loadProgress, xpForLevel, type Progress } from "@/components/gamify";
 import UserMenu from "@/components/UserMenu";
 
@@ -18,6 +19,8 @@ const LINKS = [
 
 export default function Nav() {
   const path = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = Boolean((session?.user as any)?.isAdmin);
   const [p, setP] = useState<Progress | null>(null);
   useEffect(() => setP(loadProgress()), [path]);
 
@@ -29,7 +32,7 @@ export default function Nav() {
           <span className="text-lg font-semibold tracking-tight">GreenRoom</span>
         </Link>
         <nav className="hidden items-center gap-1 sm:flex">
-          {LINKS.map((l) => {
+          {LINKS.filter((l) => l.href !== "/admin" || isAdmin).map((l) => {
             const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
             return (
               <Link

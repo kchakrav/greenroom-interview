@@ -25,9 +25,10 @@ export const authOptions: NextAuthOptions = {
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   events: {
-    async signIn({ user }) {
-      if (user.id && user.email !== "admin@local") {
-        await recordLogin({ id: user.id, name: user.name, email: user.email, image: user.image });
+    async signIn({ user, account }) {
+      const userId = account?.providerAccountId ?? user.id;
+      if (userId) {
+        await recordLogin({ id: userId, name: user.name, email: user.email, image: user.image });
       }
     },
   },

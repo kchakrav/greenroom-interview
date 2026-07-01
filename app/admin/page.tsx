@@ -10,7 +10,7 @@ import { SENIORITIES, lookup } from "@/lib/taxonomy";
 import { loadHistory } from "@/lib/history";
 import { getClientSession } from "@/lib/clientSession";
 import type { AttemptSummary } from "@/lib/types";
-import type { UserRecord, LoginEvent } from "@/lib/analytics";
+import type { AnalyticsSnapshot } from "@/lib/analytics";
 
 type Tab = "questions" | "concepts" | "attempts" | "users";
 const PAGE_SIZE = 25;
@@ -31,7 +31,7 @@ export default function AdminPage() {
   const [attemptPage, setAttemptPage] = useState(1);
   const [userPage, setUserPage] = useState(1);
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
-  const [analytics, setAnalytics] = useState<{ users: UserRecord[]; recentLogins: LoginEvent[]; totalUsers: number; activeToday: number; activeThisWeek: number } | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => setAttempts(loadHistory()), []);
@@ -252,16 +252,27 @@ export default function AdminPage() {
           {analyticsLoading && <p className="text-ink-muted">Loading analytics…</p>}
           {!analyticsLoading && analytics && (
             <>
-              {/* KV not configured */}
-              {analytics.totalUsers === 0 && analytics.recentLogins.length === 0 && (
+              {analytics.kvError && (
                 <div className="glass rounded-2xl p-6 text-center text-ink-secondary">
-                  <p className="font-medium">No data yet.</p>
-                  <p className="mt-1 text-sm text-ink-muted">User analytics require Vercel KV. Connect a KV store in your Vercel project and redeploy, or wait for the first Google sign-in after KV is set up.</p>
+                  <p className="font-medium">Analytics storage is configured, but cannot be read.</p>
+                  <p className="mt-1 text-sm text-ink-muted">{analytics.kvError} Check the KV/Upstash REST URL and token environment variables, then redeploy.</p>
+                </div>
+              )}
+              {!analytics.kvError && !analytics.kvConfigured && (
+                <div className="glass rounded-2xl p-6 text-center text-ink-secondary">
+                  <p className="font-medium">Analytics storage is not configured.</p>
+                  <p className="mt-1 text-sm text-ink-muted">Add KV or Upstash REST URL/token environment variables in Vercel, then redeploy.</p>
+                </div>
+              )}
+              {!analytics.kvError && analytics.kvConfigured && analytics.totalUsers === 0 && analytics.recentLogins.length === 0 && (
+                <div className="glass rounded-2xl p-6 text-center text-ink-secondary">
+                  <p className="font-medium">No login data yet.</p>
+                  <p className="mt-1 text-sm text-ink-muted">Analytics storage is connected. New Google or admin sign-ins will appear here after this deployment.</p>
                 </div>
               )}
 
               {/* Stat cards */}
-              {analytics.totalUsers > 0 && (
+              {!analytics.kvError && analytics.totalUsers > 0 && (
                 <>
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                     <StatCard icon={Users} label="Total users" value={String(analytics.totalUsers)} />
