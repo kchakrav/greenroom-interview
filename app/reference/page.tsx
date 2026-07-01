@@ -11,12 +11,15 @@ import {
   REF_FAQ, REF_ML, REF_EMERGING, REF_ACRONYMS, REF_PAPERS, REF_UPDATED, isRecent,
   type RefEntry,
 } from "@/lib/reference";
+import { QUESTION_BANK, type BankQuestion } from "@/lib/questionBank";
 
-type TabId = "faq" | "ml" | "em" | "papers" | "acr";
+type TabId = "faq" | "ml" | "pmq" | "aiq" | "em" | "papers" | "acr";
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<any> }[] = [
   { id: "faq", label: "AI Concepts", icon: BookOpen },
   { id: "ml", label: "ML Concepts", icon: Brain },
+  { id: "pmq", label: "PM Questions", icon: Library },
+  { id: "aiq", label: "AI Questions", icon: Sparkles },
   { id: "em", label: "Emerging", icon: Rocket },
   { id: "papers", label: "Papers", icon: FileText },
   { id: "acr", label: "Acronyms", icon: Hash },
@@ -29,7 +32,9 @@ export default function ReferencePage() {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>("faq");
 
-  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length;
+  const pmQuestions = QUESTION_BANK.filter((q) => q.disciplineId === "product");
+  const aiQuestions = QUESTION_BANK.filter((q) => q.disciplineId === "aiml");
+  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -68,6 +73,8 @@ export default function ReferencePage() {
       <div className="mt-6">
         {tab === "faq" && <EntryList items={REF_FAQ} placeholder="Search AI concepts…" />}
         {tab === "ml" && <EntryList items={REF_ML} placeholder="Search ML concepts…" showRelevance />}
+        {tab === "pmq" && <QuestionList items={pmQuestions} placeholder="Search product management interview questions…" />}
+        {tab === "aiq" && <QuestionList items={aiQuestions} placeholder="Search AI interview questions…" />}
         {tab === "em" && <EntryList items={REF_EMERGING} placeholder="Search emerging concepts…" showHorizon note="Frontier concepts gaining prominence in 2025–2026." />}
         {tab === "papers" && <Papers />}
         {tab === "acr" && <Acronyms />}
@@ -201,6 +208,82 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
                         </div>
                       )}
                       <div className="mt-3 text-[11px] text-ink-muted">Added {it.added}</div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function QuestionList({ items, placeholder }: { items: BankQuestion[]; placeholder: string }) {
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("all");
+  const [open, setOpen] = useState<string | null>(null);
+  const allCats = useMemo(() => ["all", ...Array.from(new Set(items.map((i) => i.competency))).sort()], [items]);
+
+  const shown = items.filter((it) => {
+    if (cat !== "all" && it.competency !== cat) return false;
+    const s = q.toLowerCase().trim();
+    if (!s) return true;
+    return it.prompt.toLowerCase().includes(s) || it.guidance.toLowerCase().includes(s) || it.source.toLowerCase().includes(s) || it.competency.toLowerCase().includes(s);
+  });
+
+  return (
+    <div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+        <input
+          value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder}
+          className="glass w-full rounded-xl py-2.5 pl-10 pr-4 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none"
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {allCats.map((c) => (
+          <button
+            key={c} onClick={() => setCat(c)}
+            className={`rounded-full px-3 py-1 text-xs transition ${
+              cat === c ? "btn-accent" : "glass text-ink-secondary hover:text-ink-primary"
+            }`}
+          >
+            {c === "all" ? "All" : c}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 text-xs text-ink-muted">{shown.length} of {items.length} questions</div>
+      <div className="mt-4 space-y-2">
+        {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No results found.</div>}
+        {shown.map((it) => {
+          const isOpen = open === it.id;
+          return (
+            <div key={it.id} className="glass overflow-hidden rounded-2xl">
+              <button
+                onClick={() => setOpen(isOpen ? null : it.id)}
+                className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]"
+              >
+                <div>
+                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.competency}</span>
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.type}</span>
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">Difficulty {it.difficulty}</span>
+                  </div>
+                  <div className="text-sm font-medium text-ink-primary">{it.prompt}</div>
+                </div>
+                <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden border-t border-hair"
+                  >
+                    <div className="px-4 py-4 text-sm leading-relaxed text-ink-secondary">
+                      <p>{it.guidance}</p>
+                      <p className="mt-3 text-xs text-ink-muted">Source: {it.source}</p>
                     </div>
                   </motion.div>
                 )}

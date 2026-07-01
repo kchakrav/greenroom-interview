@@ -1588,8 +1588,24 @@ export function bankFacets() {
 }
 
 // Seed questions for a live interview from the bank, matched to the config.
-export function seedQuestions(disciplineId: string, seniorityId: string, limit = 6): BankQuestion[] {
-  const exact = QUESTION_BANK.filter((b) => (b.disciplineId === disciplineId || b.disciplineId === "general") && b.levels.includes(seniorityId));
-  const pool = exact.length >= 3 ? exact : QUESTION_BANK.filter((b) => b.disciplineId === disciplineId || b.disciplineId === "general");
-  return pool.slice(0, limit);
+export function seedQuestions(disciplineId: string, seniorityId: string, limit = 6, focusAreas: string[] = []): BankQuestion[] {
+  const inScope = QUESTION_BANK.filter((b) => (b.disciplineId === disciplineId || b.disciplineId === "general") && b.levels.includes(seniorityId));
+  const fallback = QUESTION_BANK.filter((b) => b.disciplineId === disciplineId || b.disciplineId === "general");
+  const basePool = inScope.length >= 3 ? inScope : fallback;
+  const focus = focusAreas.filter(Boolean);
+  const focused = focus.length ? basePool.filter((b) => focus.includes(b.competency)) : basePool;
+  const pool = focused.length >= Math.min(3, limit) ? focused : basePool;
+  const selected: BankQuestion[] = [];
+  const seenCompetencies = new Set<string>();
+  for (const q of pool) {
+    if (selected.length >= limit) break;
+    if (seenCompetencies.has(q.competency)) continue;
+    selected.push(q);
+    seenCompetencies.add(q.competency);
+  }
+  for (const q of pool) {
+    if (selected.length >= limit) break;
+    if (!selected.some((s) => s.id === q.id)) selected.push(q);
+  }
+  return selected;
 }

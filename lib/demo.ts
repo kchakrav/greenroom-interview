@@ -95,7 +95,8 @@ function questionBank(config: StageConfig): string[] {
   ];
   // Prefer sourced, level-matched questions from the curated bank; fall back to
   // the discipline defaults below if the bank is thin for this combination.
-  const seeded = seedQuestions(config.disciplineId, config.seniorityId, 6)
+  const focusAreas = config.focusAreas.length ? config.focusAreas : lookup(config.disciplineId, config.roleId, config.seniorityId).role.focusAreas;
+  const seeded = seedQuestions(config.disciplineId, config.seniorityId, 6, focusAreas)
     .filter((s) => s.type !== "coding")
     .map((s) => s.prompt);
 

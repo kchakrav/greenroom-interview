@@ -5,12 +5,16 @@ import { Dumbbell, Clock } from "lucide-react";
 import Nav from "@/components/Nav";
 import { useStage } from "@/lib/useStage";
 import { competenciesFor, lookup } from "@/lib/taxonomy";
+import { QUESTION_BANK } from "@/lib/questionBank";
 
 export default function DrillsPage() {
   const router = useRouter();
   const { config, set } = useStage();
   const { role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
-  const comps = competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
+  const bankCompetencies = QUESTION_BANK
+    .filter((q) => q.disciplineId === config.disciplineId && q.levels.includes(config.seniorityId))
+    .map((q) => q.competency);
+  const comps = Array.from(new Set([...role.focusAreas, ...competenciesFor(config.disciplineId, config.roleId, config.seniorityId), ...bankCompetencies]));
 
   function startDrill(competency: string) {
     set({ mode: "practice", drill: { competency }, pathStep: undefined, modalities: ["voice", "text"], durationMin: 15 });

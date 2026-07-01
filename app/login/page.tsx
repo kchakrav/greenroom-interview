@@ -1,10 +1,19 @@
 "use client";
+import { Suspense } from "react";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginShell />}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
@@ -80,6 +89,20 @@ export default function LoginPage() {
               </button>
             </form>
           )}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function LoginShell() {
+  return (
+    <main className="flex min-h-screen items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="h-14 w-14 rounded-2xl btn-accent grid place-items-center text-xl font-bold">GR</div>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome to <span className="accent-text">GreenRoom</span></h1>
+          <p className="text-sm text-ink-secondary text-center">Loading sign in…</p>
         </div>
       </div>
     </main>

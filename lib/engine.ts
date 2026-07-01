@@ -29,7 +29,8 @@ const TONE_PERSONA: Record<StageConfig["tone"], string> = {
 export function interviewerSystemPrompt(config: StageConfig): string {
   const { discipline, role, seniority } = lookup(config.disciplineId, config.roleId, config.seniorityId);
   const comps = competenciesFor(config.disciplineId, config.roleId, config.seniorityId);
-  const focus = config.focusAreas.length ? config.focusAreas.join(", ") : role.focusAreas.join(", ");
+  const focusAreas = config.focusAreas.length ? config.focusAreas : role.focusAreas;
+  const focus = focusAreas.join(", ");
   const ctx = config.jobContext?.jobDescription
     ? `\n\nJob context to ground questions on:\n${config.jobContext.jobDescription.slice(0, 1500)}`
     : "";
@@ -64,7 +65,7 @@ HOW TO RUN A RIGOROUS STRUCTURED INTERVIEW:
 ${config.modalities.includes("coding") ? `- TECHNICAL/CODING ROUND: pose ONE concrete coding or system-design problem the candidate solves in their editor (e.g. a function to implement, or a system to design). Ask them to explain their approach and reason about complexity. When they submit code, review it: correctness, edge cases, complexity, and style — then ask a focused follow-up.` : ""}
 
 QUESTION POOL (drawn from established interview-prep resources — ADAPT these to the candidate, don't read verbatim, and follow up naturally):
-${seedQuestions(config.disciplineId, config.seniorityId).map((s) => `- (${s.competency}) ${s.prompt}  [src: ${s.source}]`).join("\n")}
+${seedQuestions(config.disciplineId, config.seniorityId, 6, focusAreas).map((s) => `- (${s.competency}) ${s.prompt}  [src: ${s.source}]`).join("\n")}
 
 OUTPUT RULES:
 - Respond ONLY as the interviewer's spoken words. No stage directions, no markdown, no lists, no scores.

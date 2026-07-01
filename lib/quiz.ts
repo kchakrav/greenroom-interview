@@ -310,7 +310,27 @@ export interface QuizFilter { disciplineId?: string; topic?: string; }
 
 // Full MCQ corpus = general/discipline bank + the AI/ML knowledge base.
 import { AIML_BANK } from "./aiml";
-const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...AIML_BANK];
+import { QUESTION_BANK } from "./questionBank";
+
+const INTERVIEW_BANK_MCQ: MCQ[] = QUESTION_BANK
+  .filter((q) => q.disciplineId === "product" || q.disciplineId === "aiml")
+  .map((q) => ({
+    id: `learn-${q.id}`,
+    disciplineId: q.disciplineId,
+    topic: q.competency,
+    question: `For this interview scenario, what is the strongest first approach? ${q.prompt}`,
+    options: [
+      "Clarify the goal, users, constraints, success metric, tradeoffs, and evidence needed before recommending a path.",
+      "Jump directly to a feature idea and defend it as the final answer.",
+      "List every possible metric or technology without choosing a primary decision criterion.",
+      "Avoid assumptions, tradeoffs, and guardrails so the answer stays broad.",
+    ],
+    correctIndex: 0,
+    explanation: q.guidance,
+    source: q.source,
+  }));
+
+const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...AIML_BANK, ...INTERVIEW_BANK_MCQ];
 
 export function quizQuestions(f: QuizFilter, count = 6): MCQ[] {
   // AI/ML is a self-contained knowledge base — don't fold in "general".
