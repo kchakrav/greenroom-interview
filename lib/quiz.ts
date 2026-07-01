@@ -306,6 +306,87 @@ export const QUIZ_BANK: MCQ[] = [
     source: "Platform PM practice; Stripe API design principles" },
 ];
 
+const SYSTEM_DESIGN_CONCEPT_MCQ: MCQ[] = [
+  { id: "sdq-capacity", disciplineId: "system-design", topic: "Scalability & Capacity",
+    question: "In a system design interview, why do back-of-the-envelope estimates come before choosing databases?",
+    options: ["They prove the exact cloud bill", "They reveal scale, bottlenecks, and whether simple designs are sufficient", "They replace requirements", "They determine the UI"], correctIndex: 1,
+    explanation: "Traffic, storage, QPS, and bandwidth estimates shape architecture choices and show the interviewer your assumptions.",
+    source: "donnemartin/system-design-primer; System Design Interview practice" },
+  { id: "sdq-hotkey", disciplineId: "system-design", topic: "Scalability & Capacity",
+    question: "A 'hot key' problem usually means…",
+    options: ["One partition receives disproportionate traffic", "Encryption keys expired", "All caches are cold", "The API key is public"], correctIndex: 0,
+    explanation: "Hot keys overload a shard/cache node; mitigation includes key salting, replication, special-case routing, or fanout changes.",
+    source: "Distributed systems interview practice; system-design-primer" },
+  { id: "sdq-index", disciplineId: "system-design", topic: "Data Modeling & Storage",
+    question: "The strongest reason to start data modeling from access patterns is that…",
+    options: ["It avoids all migrations", "Storage choices depend on reads, writes, consistency, and query shapes", "SQL is always best", "Indexes are free"], correctIndex: 1,
+    explanation: "Access patterns determine schema, indexes, partition keys, denormalization, and whether a relational, document, KV, or search store fits.",
+    source: "Designing Data-Intensive Applications; system-design-primer" },
+  { id: "sdq-cache-invalidate", disciplineId: "system-design", topic: "Caching & Performance",
+    question: "Cache invalidation is hard primarily because…",
+    options: ["RAM is slow", "Stale data and distributed writes make freshness/correctness tradeoffs explicit", "Caches cannot scale", "CDNs only support images"], correctIndex: 1,
+    explanation: "Caching improves latency and load, but every placement needs a strategy for staleness, write-through/write-around, TTLs, and invalidation.",
+    source: "Caching pattern literature; system design practice" },
+  { id: "sdq-queue", disciplineId: "system-design", topic: "Queues & Streams",
+    question: "A queue is most useful when you need to…",
+    options: ["Make every operation synchronous", "Decouple producers from slower or bursty consumers", "Guarantee zero duplicates automatically", "Avoid retries"], correctIndex: 1,
+    explanation: "Queues absorb bursts, enable async work, and isolate failures, but usually require idempotency and retry handling.",
+    source: "Kafka architecture references; distributed systems practice" },
+  { id: "sdq-idempotency", disciplineId: "system-design", topic: "Payments & Idempotency",
+    question: "An idempotency key helps payment APIs because it…",
+    options: ["Encrypts card data", "Lets retried requests avoid duplicate side effects", "Replaces fraud checks", "Makes all distributed transactions exact"], correctIndex: 1,
+    explanation: "Retries are unavoidable; idempotency lets clients safely retry while the server deduplicates the business operation.",
+    source: "Stripe API/idempotency references; payment backend practice" },
+  { id: "sdq-slo", disciplineId: "system-design", topic: "Reliability & Observability",
+    question: "An SLO should be defined around…",
+    options: ["What users experience", "How many dashboards exist", "How many servers are deployed", "The team's sprint velocity"], correctIndex: 0,
+    explanation: "Good SLOs reflect user-visible reliability, such as availability, latency, freshness, or correctness over a measured window.",
+    source: "SRE practice; incident response interviews" },
+  { id: "sdq-search", disciplineId: "system-design", topic: "Search & Indexing",
+    question: "A search index is usually maintained separately from the primary database because…",
+    options: ["Primary databases cannot store text", "Search serving needs inverted/vector indexes, ranking, and different freshness tradeoffs", "It removes the need for storage", "It guarantees perfect relevance"], correctIndex: 1,
+    explanation: "Search systems optimize query/relevance paths separately from source-of-truth storage, often with ingestion pipelines and eventual consistency.",
+    source: "Search architecture practice; system-design-primer" },
+  { id: "sdq-crdt", disciplineId: "system-design", topic: "Collaboration & Conflict Resolution",
+    question: "CRDTs are useful in collaborative systems because they…",
+    options: ["Prevent all offline edits", "Allow concurrent replicas to merge deterministically under specific data types", "Require a single leader for every edit", "Only work for payments"], correctIndex: 1,
+    explanation: "CRDTs make certain concurrent updates mergeable without central coordination, trading complexity for offline/multi-writer collaboration.",
+    source: "CRDT/OT literature; collaborative editor design practice" },
+  { id: "sdq-rag", disciplineId: "system-design", topic: "ML / AI System Design",
+    question: "In a RAG system, retrieval quality is critical because…",
+    options: ["The LLM can always infer missing facts", "The generated answer is bounded by the relevance, permissions, and freshness of supplied context", "Embeddings replace all evals", "Latency no longer matters"], correctIndex: 1,
+    explanation: "RAG quality depends on ingestion, chunking, embeddings, filters, reranking, citations, and evals that catch missing or wrong context.",
+    source: "chiphuyen/machine-learning-systems-design; RAG practice" },
+];
+
+const AI_PM_CONCEPT_MCQ: MCQ[] = [
+  { id: "aipmq-evals", disciplineId: "product", topic: "AI Evaluation & Metrics",
+    question: "For an AI PM, an offline eval is most useful before launch because it…",
+    options: ["Guarantees product-market fit", "Creates a repeatable quality gate before exposing users to regressions", "Replaces online metrics", "Eliminates human review"], correctIndex: 1,
+    explanation: "Offline evals provide regression checks and launch thresholds; online product metrics still validate user value after launch.",
+    source: "AI PM interview kit; GitHub Copilot AI PM guide" },
+  { id: "aipmq-ai-necessity", disciplineId: "product", topic: "AI Product Sense",
+    question: "The first AI product-sense question is often…",
+    options: ["Which model is newest?", "Is AI necessary for the user problem and workflow?", "Can we make the UI look intelligent?", "How many tokens can we spend?"], correctIndex: 1,
+    explanation: "Strong AI PMs start with user value and workflow fit, then reason about probabilistic failures, cost, latency, and trust.",
+    source: "AI Product Sense interview guides; Google PAIR" },
+  { id: "aipmq-cost", disciplineId: "product", topic: "Model Cost & Latency Tradeoffs",
+    question: "A model-routing strategy usually balances…",
+    options: ["Only brand perception", "Quality, latency, cost, safety, and task complexity", "Only token count", "Only UI performance"], correctIndex: 1,
+    explanation: "AI PMs often route easy tasks to cheaper/faster models and hard or risky tasks to stronger models with stricter checks.",
+    source: "AI FinOps practice; LLM API economics" },
+  { id: "aipmq-trust", disciplineId: "product", topic: "Responsible AI & Safety",
+    question: "A good AI UX for uncertainty should…",
+    options: ["Hide uncertainty", "Show confidence, citations, or escalation paths when the answer may be wrong", "Always block output", "Make the model sound more confident"], correctIndex: 1,
+    explanation: "Trustworthy AI products help users calibrate reliance and correct errors, especially in high-impact workflows.",
+    source: "Google PAIR; NIST AI RMF; AI UX practice" },
+  { id: "aipmq-enterprise", disciplineId: "product", topic: "Enterprise AI Adoption",
+    question: "Enterprise AI adoption often fails when teams ignore…",
+    options: ["Admin controls, data governance, security review, change management, and measurable workflow value", "The product logo", "Consumer-only virality", "The longest possible onboarding"], correctIndex: 0,
+    explanation: "Enterprise buyers need trust, controls, integration, rollout, and ROI proof, while end users need clear workflow value.",
+    source: "Enterprise AI product practice; AI PM interview kit" },
+];
+
 export interface QuizFilter { disciplineId?: string; topic?: string; }
 
 // Full MCQ corpus = general/discipline bank + the AI/ML knowledge base.
@@ -313,7 +394,7 @@ import { AIML_BANK } from "./aiml";
 import { QUESTION_BANK } from "./questionBank";
 
 const INTERVIEW_BANK_MCQ: MCQ[] = QUESTION_BANK
-  .filter((q) => q.disciplineId === "product" || q.disciplineId === "aiml")
+  .filter((q) => q.disciplineId === "product" || q.disciplineId === "aiml" || q.disciplineId === "system-design")
   .map((q) => ({
     id: `learn-${q.id}`,
     disciplineId: q.disciplineId,
@@ -330,7 +411,7 @@ const INTERVIEW_BANK_MCQ: MCQ[] = QUESTION_BANK
     source: q.source,
   }));
 
-const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...AIML_BANK, ...INTERVIEW_BANK_MCQ];
+const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...SYSTEM_DESIGN_CONCEPT_MCQ, ...AI_PM_CONCEPT_MCQ, ...AIML_BANK, ...INTERVIEW_BANK_MCQ];
 
 export function quizQuestions(f: QuizFilter, count = 6): MCQ[] {
   // AI/ML is a self-contained knowledge base — don't fold in "general".

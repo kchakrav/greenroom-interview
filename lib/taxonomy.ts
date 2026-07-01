@@ -52,16 +52,28 @@ export const DISCIPLINES: Discipline[] = [
     ],
   },
   {
+    id: "system-design",
+    label: "System Design",
+    icon: "Network",
+    roles: [
+      { id: "backend-sd", label: "Backend Engineer", focusAreas: ["Scalability & Capacity", "API Design", "Data Modeling & Storage", "Reliability & Observability"] },
+      { id: "fullstack-sd", label: "Full-Stack Engineer", focusAreas: ["Frontend / Mobile System Design", "Realtime Collaboration", "API Design", "Caching & Performance"] },
+      { id: "staff-sd", label: "Staff / Principal Engineer", focusAreas: ["Distributed Systems Strategy", "Reliability & Observability", "Security & Abuse Prevention", "Tradeoff Communication"] },
+      { id: "em-sd", label: "Engineering Manager", focusAreas: ["Architecture Review", "Execution & Migration Planning", "Incident Response", "Cross-team Alignment"] },
+      { id: "ai-systems", label: "ML / AI Systems Engineer", focusAreas: ["ML / AI System Design", "Vector Search & Retrieval", "Model Serving & Inference", "MLOps & Evaluation"] },
+    ],
+  },
+  {
     id: "product",
     label: "Product Management",
     icon: "Compass",
     roles: [
       { id: "pm", label: "Product Manager", focusAreas: ["Product Sense", "Operational Metrics", "Execution & Prioritization", "Pricing & Packaging", "Leadership & Stakeholder Influence"] },
-      { id: "tpm", label: "Technical PM", focusAreas: ["Technical Product Thinking", "Platform Thinking", "Execution & Prioritization", "Stakeholder Mgmt"] },
+      { id: "tpm", label: "Technical PM", focusAreas: ["Technical Product Thinking", "Developer Products", "System / API Thinking", "Execution & Prioritization"] },
       { id: "growthpm", label: "Growth PM", focusAreas: ["Growth & Experimentation", "Operational Metrics", "Pricing & Packaging", "Product Sense"] },
-      { id: "platformpm", label: "Platform PM", focusAreas: ["Platform Thinking", "System / API Thinking", "Product Strategy", "Operational Metrics"] },
-      { id: "aipm", label: "AI / ML PM", focusAreas: ["AI Product Sense", "AI Evaluation & Metrics", "Responsible AI & Safety", "Prompting & Context Engineering"] },
-      { id: "gpm", label: "Group PM / Lead", focusAreas: ["Product Strategy", "Go-to-Market", "Product Operations", "Leadership & Stakeholder Influence"] },
+      { id: "platformpm", label: "Platform PM", focusAreas: ["Platform Thinking", "Developer Products", "System / API Thinking", "Ecosystem Strategy"] },
+      { id: "aipm", label: "AI / ML PM", focusAreas: ["AI Product Sense", "AI Evaluation & Metrics", "Model Cost & Latency Tradeoffs", "Responsible AI & Safety"] },
+      { id: "gpm", label: "Group PM / Lead", focusAreas: ["Product Strategy", "Go-to-Market", "Enterprise AI Adoption", "Leadership & Stakeholder Influence"] },
     ],
   },
   {
@@ -155,6 +167,7 @@ export function competenciesFor(disciplineId: string, roleId: string, seniorityI
   const isLeader = LEADER_LEVELS.includes(seniorityId);
   const base: Record<string, string[]> = {
     engineering: ["Problem Solving", "Technical Depth", "Code/Design Quality", "Communication", "Collaboration"],
+    "system-design": ["Scalability & Capacity", "Data Modeling & Storage", "Reliability & Observability", "API Design", "Tradeoff Communication"],
     product: ["Product Sense", "Analytical Thinking", "Execution", "Strategic Thinking", "Stakeholder Influence"],
     data: ["Analytical Rigor", "Technical Skill", "Business Insight", "Communication", "Experiment Design"],
     aiml: ["AI Product Sense", "LLM Fundamentals", "RAG & Agents", "AI Evaluation", "Responsible AI"],

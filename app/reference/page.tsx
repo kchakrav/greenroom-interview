@@ -13,13 +13,14 @@ import {
 } from "@/lib/reference";
 import { QUESTION_BANK, type BankQuestion } from "@/lib/questionBank";
 
-type TabId = "faq" | "ml" | "pmq" | "aiq" | "em" | "papers" | "acr";
+type TabId = "faq" | "ml" | "pmq" | "aiq" | "sdq" | "em" | "papers" | "acr";
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<any> }[] = [
   { id: "faq", label: "AI Concepts", icon: BookOpen },
   { id: "ml", label: "ML Concepts", icon: Brain },
   { id: "pmq", label: "PM Questions", icon: Library },
   { id: "aiq", label: "AI Questions", icon: Sparkles },
+  { id: "sdq", label: "System Design", icon: Link2 },
   { id: "em", label: "Emerging", icon: Rocket },
   { id: "papers", label: "Papers", icon: FileText },
   { id: "acr", label: "Acronyms", icon: Hash },
@@ -35,7 +36,8 @@ export default function ReferencePage() {
 
   const pmQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "product"), []);
   const aiQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "aiml"), []);
-  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length;
+  const sdQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "system-design"), []);
+  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length + sdQuestions.length;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -76,6 +78,7 @@ export default function ReferencePage() {
         {tab === "ml" && <EntryList items={REF_ML} placeholder="Search ML concepts…" showRelevance />}
         {tab === "pmq" && <QuestionList items={pmQuestions} placeholder="Search product management interview questions…" />}
         {tab === "aiq" && <QuestionList items={aiQuestions} placeholder="Search AI interview questions…" />}
+        {tab === "sdq" && <QuestionList items={sdQuestions} placeholder="Search system design interview questions…" />}
         {tab === "em" && <EntryList items={REF_EMERGING} placeholder="Search emerging concepts…" showHorizon note="Frontier concepts gaining prominence in 2025–2026." />}
         {tab === "papers" && <Papers />}
         {tab === "acr" && <Acronyms />}

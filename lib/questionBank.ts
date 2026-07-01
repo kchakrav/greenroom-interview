@@ -33,7 +33,7 @@ const ALL = ["junior", "mid", "senior", "staff", "manager", "senior-manager", "d
 
 interface DeepCategorySpec {
   prefix: string;
-  disciplineId: "product" | "aiml";
+  disciplineId: "product" | "aiml" | "system-design";
   competency: string;
   type: QType;
   levels: string[];
@@ -179,6 +179,60 @@ const AI_LENSES = [
   "AI FinOps and unit economics",
 ];
 
+const SD_SCENARIOS = [
+  "Design a URL shortener",
+  "Design a social news feed",
+  "Design a real-time chat system",
+  "Design a collaborative document editor",
+  "Design a video streaming platform",
+  "Design a ride-hailing dispatch system",
+  "Design a payment processing backend",
+  "Design a distributed job scheduler",
+  "Design a cloud file storage service",
+  "Design an API gateway for a multi-tenant SaaS platform",
+  "Design a search platform for millions of documents",
+  "Design a notification system across email, push, and SMS",
+  "Design a leaderboard for a global game",
+  "Design an observability platform for microservices",
+  "Design a RAG-powered enterprise knowledge system",
+];
+
+const SD_CHALLENGES = [
+  "traffic spikes 20x during launches",
+  "read latency must stay under 100 ms at p95",
+  "writes arrive from multiple regions",
+  "the system must tolerate a regional outage",
+  "hot keys and celebrity users overload partitions",
+  "data must be searchable within seconds",
+  "privacy and tenant isolation are strict requirements",
+  "clients need offline and retry-friendly behavior",
+  "cost is growing faster than usage",
+  "schema changes must not break old clients",
+  "abuse and spam attempts are increasing",
+  "backfills and migrations must not interrupt traffic",
+  "exactly-once behavior is requested for user-visible actions",
+  "observability is too weak to debug incidents",
+  "machine learning inference or retrieval is on the critical path",
+];
+
+const SD_LENSES = [
+  "requirements clarification and non-goals",
+  "back-of-the-envelope capacity estimation",
+  "API contracts and idempotency",
+  "data modeling and storage choice",
+  "partitioning, sharding, and hot-key mitigation",
+  "caching strategy and invalidation",
+  "queues, streams, and async workflows",
+  "consistency, replication, and conflict resolution",
+  "availability, failover, and disaster recovery",
+  "rate limiting, abuse prevention, and security boundaries",
+  "observability, SLOs, and incident response",
+  "migration strategy and backwards compatibility",
+  "cost, latency, and operational complexity tradeoffs",
+  "frontend/mobile constraints and offline behavior",
+  "ML serving, vector retrieval, and evaluation loops",
+];
+
 const DEEP_CATEGORY_SIZE = 105;
 
 const PRODUCT_DEEP_BANK: BankQuestion[] = [
@@ -190,6 +244,12 @@ const PRODUCT_DEEP_BANK: BankQuestion[] = [
   ...deepQuestions({ prefix: "pmdeep-pricing", disciplineId: "product", competency: "Pricing & Packaging", type: "case", levels: ["senior", "staff", "manager", "director"], difficulty: 5, source: "Reforge pricing; PLG monetization; OpenView SaaS benchmarks", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate willingness-to-pay, value metrics, segmentation, packaging boundaries, migration risk, gross margin, sales impact, and retention guardrails." }),
   ...deepQuestions({ prefix: "pmdeep-gtm", disciplineId: "product", competency: "Go-to-Market", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Obviously Awesome; Crossing the Chasm; Product Marketing Alliance GTM practice", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate ICP, positioning, beta design, enablement, launch channels, adoption plan, and post-launch learning loops." }),
   ...deepQuestions({ prefix: "pmdeep-leadership", disciplineId: "product", competency: "Leadership & Stakeholder Influence", type: "behavioral", levels: ["senior", "staff", "manager", "director", "senior-director", "vp"], difficulty: 4, source: "IGotAnOffer PM behavioral; Empowered; Crucial Conversations; STAR", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate ownership, influence without authority, conflict handling, executive communication, team leadership, and learning from outcomes." }),
+  ...deepQuestions({ prefix: "pmdeep-devprod", disciplineId: "product", competency: "Developer Products", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "GitHub PM interview guides; Stripe API principles; product-led developer tools practice", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate developer workflow empathy, maintainer and ecosystem incentives, documentation, onboarding, API trust, workflow integration, and adoption metrics." }),
+  ...deepQuestions({ prefix: "pmdeep-techpm", disciplineId: "product", competency: "Technical Product Thinking", type: "technical", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Technical PM interview practice; system design primer topic map; platform product management practice", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate technical constraint reasoning, architecture tradeoffs, dependency mapping, incremental delivery, migration risk, and crisp communication with engineering." }),
+  ...deepQuestions({ prefix: "pmdeep-api", disciplineId: "product", competency: "System / API Thinking", type: "case", levels: ["senior", "staff", "manager", "director"], difficulty: 5, source: "API product management practice; Stripe API principles; developer platform case interviews", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate API contract clarity, versioning, discoverability, backwards compatibility, platform leverage, governance, reliability promises, and ecosystem effects." }),
+  ...deepQuestions({ prefix: "pmdeep-ecosystem", disciplineId: "product", competency: "Ecosystem Strategy", type: "strategy", levels: ["senior", "staff", "manager", "director", "senior-director", "vp"], difficulty: 5, source: "Platform strategy practice; GitHub ecosystem PM guides; Playing to Win", count: DEEP_CATEGORY_SIZE, scenarios: PM_SCENARIOS, challenges: PM_CHALLENGES, lenses: PM_LENSES, guidance: "Evaluate complements, partners, marketplace incentives, governance, monetization, trust, developer relations, and durable right-to-win." }),
+  ...deepQuestions({ prefix: "pmdeep-enterprise-ai", disciplineId: "product", competency: "Enterprise AI Adoption", type: "strategy", levels: ["senior", "staff", "manager", "director", "senior-director", "vp"], difficulty: 5, source: "AI PM interview kit; enterprise AI product practice; NIST AI RMF", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate buyer/user split, security review, data governance, admin controls, change management, trust, measurable productivity, and rollout sequencing." }),
+  ...deepQuestions({ prefix: "pmdeep-ai-cost", disciplineId: "product", competency: "Model Cost & Latency Tradeoffs", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 5, source: "AI PM interview kit; GitHub Copilot AI PM guide; AI FinOps practice", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate model routing, caching, context compression, tiering, usage limits, gross margin, p95 latency, quality thresholds, and product packaging." }),
 ];
 
 const AI_DEEP_BANK: BankQuestion[] = [
@@ -201,6 +261,37 @@ const AI_DEEP_BANK: BankQuestion[] = [
   ...deepQuestions({ prefix: "aideep-safety", disciplineId: "aiml", competency: "Responsible AI & Safety", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 5, source: "NIST AI RMF; Google PAIR; OWASP LLM Apps; responsible AI practice", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate harm taxonomy, user agency, privacy, bias, misuse, red teaming, policy enforcement, incident response, and residual-risk communication." }),
   ...deepQuestions({ prefix: "aideep-mlops", disciplineId: "aiml", competency: "MLOps & Observability", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 5, source: "Designing Machine Learning Systems; LLMOps practice; SRE incident response", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate monitoring, traces, drift, model/prompt/data versioning, rollback, fallbacks, SLOs, cost controls, and operational ownership." }),
   ...deepQuestions({ prefix: "aideep-prompting", disciplineId: "aiml", competency: "Prompting & Context Engineering", type: "technical", levels: ["junior", "mid", "senior", "staff"], difficulty: 4, source: "OpenAI/Anthropic prompting guides; context engineering practice; LLMOps practice", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate instructions, examples, schemas, context selection, memory, tool context, compression, prompt-injection resistance, and eval-backed iteration." }),
+  ...deepQuestions({ prefix: "aideep-security", disciplineId: "aiml", competency: "AI Security", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OWASP LLM Apps; NIST AI RMF; prompt injection and agent security practice", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate threat modeling, prompt injection, data exfiltration, tool permissions, sandboxing, secrets handling, monitoring, and incident containment." }),
+  ...deepQuestions({ prefix: "aideep-finops", disciplineId: "aiml", competency: "AI FinOps", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 5, source: "AI FinOps practice; LLM API economics; AI PM interview kit", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate token economics, model choice, caching, batching, rate limits, pricing, usage distribution, abuse, and margin-aware product decisions." }),
+  ...deepQuestions({ prefix: "aideep-serving", disciplineId: "aiml", competency: "Model Serving & Inference", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "Machine Learning Interviews; ML system design patterns; production inference practice", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate serving topology, batching, GPU utilization, fallbacks, SLOs, autoscaling, model versioning, canaries, and quality regression controls." }),
+  ...deepQuestions({ prefix: "aideep-vector", disciplineId: "aiml", competency: "Vector Search & Retrieval", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "RAG literature; vector database practice; ML system design interviews", count: DEEP_CATEGORY_SIZE, scenarios: AI_SCENARIOS, challenges: AI_CHALLENGES, lenses: AI_LENSES, guidance: "Evaluate embedding choice, hybrid retrieval, metadata filters, permissions, freshness, reranking, recall/precision, citations, and operational cost." }),
+];
+
+const SYSTEM_DESIGN_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "sddeep-scale", disciplineId: "system-design", competency: "Scalability & Capacity", type: "system-design", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "donnemartin/system-design-primer (CC BY 4.0); arifsuhanbk/system-design (MIT); System Design Academy topic map used as reference-only", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate requirements, traffic estimates, bottleneck identification, horizontal scale, partitioning, queueing, backpressure, and clear assumptions." }),
+  ...deepQuestions({ prefix: "sddeep-storage", disciplineId: "system-design", competency: "Data Modeling & Storage", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Designing Data-Intensive Applications; system-design-primer; MIT-style system design practice repos", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate entity modeling, access patterns, relational versus NoSQL choices, indexing, replication, retention, migrations, and consistency tradeoffs." }),
+  ...deepQuestions({ prefix: "sddeep-cache", disciplineId: "system-design", competency: "Caching & Performance", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "system-design-primer; ByteByteGo/system-design-101 topic map used as reference-only; caching pattern literature", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate cache placement, key design, TTLs, invalidation, stampede control, hot keys, CDN use, p95 latency, and correctness risks." }),
+  ...deepQuestions({ prefix: "sddeep-queues", disciplineId: "system-design", competency: "Queues & Streams", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Kafka architecture references; system-design-primer; distributed systems interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate async boundaries, ordering, retries, idempotency, dead letters, consumer scaling, backpressure, replay, and exactly-once claims." }),
+  ...deepQuestions({ prefix: "sddeep-search", disciplineId: "system-design", competency: "Search & Indexing", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "system-design-primer; search architecture practice; ML retrieval references", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate indexing pipeline, query serving, ranking, freshness, autocomplete, shard strategy, relevance metrics, and failure isolation." }),
+  ...deepQuestions({ prefix: "sddeep-feed", disciplineId: "system-design", competency: "Feeds & Ranking", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "social feed design practice; recommender systems interviews; system-design-primer", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate fanout strategy, graph access, ranking, freshness, celebrity cases, dedupe, safety, experimentation, and multi-objective metrics." }),
+  ...deepQuestions({ prefix: "sddeep-realtime", disciplineId: "system-design", competency: "Realtime Systems", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "websocket architecture practice; system-design-primer; realtime collaboration case studies used as topic maps", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate websocket/session management, presence, ordering, retries, offline sync, conflict handling, connection scaling, and graceful degradation." }),
+  ...deepQuestions({ prefix: "sddeep-payments", disciplineId: "system-design", competency: "Payments & Idempotency", type: "system-design", levels: ["senior", "staff"], difficulty: 5, source: "Stripe API/idempotency references; payment backend interview practice; distributed systems literature", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate ledgers, idempotency keys, reconciliation, state machines, fraud checks, retries, exactly-once illusion, auditability, and compliance boundaries." }),
+  ...deepQuestions({ prefix: "sddeep-media", disciplineId: "system-design", competency: "Media & Large Files", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "video/file storage system design practice; CDN architecture references; system-design-primer", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate upload protocols, chunking, transcoding, metadata, CDN, lifecycle policies, integrity checks, quotas, and playback or download performance." }),
+  ...deepQuestions({ prefix: "sddeep-collab", disciplineId: "system-design", competency: "Collaboration & Conflict Resolution", type: "system-design", levels: ["senior", "staff"], difficulty: 5, source: "collaborative editor design references; CRDT/OT literature; system design interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate OT/CRDT choices, version vectors, presence, permissions, offline edits, merge conflicts, storage compaction, and user-visible correctness." }),
+  ...deepQuestions({ prefix: "sddeep-reliability", disciplineId: "system-design", competency: "Reliability & Observability", type: "system-design", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "SRE practice; system-design-primer; incident response interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate SLOs, SLIs, tracing, logging, metrics, alert quality, runbooks, failover, rollback, blast-radius control, and post-incident learning." }),
+  ...deepQuestions({ prefix: "sddeep-security", disciplineId: "system-design", competency: "Security & Abuse Prevention", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OWASP; API security practice; system design security topic maps", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate authn/authz, tenant isolation, encryption, rate limits, abuse patterns, audit logs, secrets, secure defaults, and privacy constraints." }),
+  ...deepQuestions({ prefix: "sddeep-api", disciplineId: "system-design", competency: "API Design", type: "system-design", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "API design best practices; Stripe API principles; system design interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate resource modeling, versioning, pagination, idempotency, error semantics, rate limits, compatibility, SDK ergonomics, and observability." }),
+  ...deepQuestions({ prefix: "sddeep-mobile", disciplineId: "system-design", competency: "Frontend / Mobile System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "frontend and mobile system design practice; system-design-primer topic map", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate client architecture, state, caching, offline support, network retries, performance budgets, accessibility, telemetry, and server contracts." }),
+  ...deepQuestions({ prefix: "sddeep-ml", disciplineId: "system-design", competency: "ML / AI System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "alirezadir/machine-learning-interviews; chiphuyen/machine-learning-systems-design; mercari/ml-system-design-pattern", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate training/serving split, features, retrieval, model serving, evals, monitoring, drift, cost, fallbacks, human review, and product feedback loops." }),
+  ...deepQuestions({ prefix: "sddeep-migration", disciplineId: "system-design", competency: "Execution & Migration Planning", type: "system-design", levels: ["senior", "staff", "manager"], difficulty: 5, source: "large-scale migration case studies; SRE practice; system design interview follow-up patterns", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate phased rollout, dual writes, backfills, validation, rollback, stakeholder communication, capacity planning, and risk burn-down." }),
+  ...deepQuestions({ prefix: "sddeep-tradeoff", disciplineId: "system-design", competency: "Tradeoff Communication", type: "system-design", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "system design interview rubrics; staff engineering communication practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate explicit assumptions, option framing, decision criteria, rejected alternatives, risks, and a clear recommendation that non-specialists can understand." }),
+  ...deepQuestions({ prefix: "sddeep-archreview", disciplineId: "system-design", competency: "Architecture Review", type: "system-design", levels: ["senior", "staff", "manager"], difficulty: 5, source: "architecture review practice; staff engineering design review rubrics", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate design critique, requirement gaps, operability, data correctness, security, migration risk, team ownership, and decision record quality." }),
+  ...deepQuestions({ prefix: "sddeep-incident", disciplineId: "system-design", competency: "Incident Response", type: "behavioral", levels: ["senior", "staff", "manager"], difficulty: 4, source: "SRE incident response practice; production systems interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate triage, containment, communication, impact assessment, rollback, root cause analysis, follow-up prevention, and calm leadership under pressure." }),
+  ...deepQuestions({ prefix: "sddeep-cross-team", disciplineId: "system-design", competency: "Cross-team Alignment", type: "leadership", levels: ["staff", "manager", "senior-manager", "director"], difficulty: 4, source: "staff engineering leadership practice; engineering management architecture planning", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate stakeholder mapping, dependency sequencing, written alignment, escalation paths, shared metrics, and how technical decisions become executable plans." }),
+  ...deepQuestions({ prefix: "sddeep-dist-strategy", disciplineId: "system-design", competency: "Distributed Systems Strategy", type: "strategy", levels: ["staff", "manager", "director", "senior-director", "vp"], difficulty: 5, source: "distributed systems strategy practice; Designing Data-Intensive Applications; SRE leadership", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate long-term platform direction, standards, reliability investments, data architecture, organizational leverage, migration sequencing, and business tradeoffs." }),
+  ...deepQuestions({ prefix: "sddeep-vector", disciplineId: "system-design", competency: "Vector Search & Retrieval", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "RAG and vector search practice; ML system design interviews", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate embeddings, hybrid search, metadata filters, permissions, freshness, reranking, recall metrics, latency, cost, and citation quality." }),
+  ...deepQuestions({ prefix: "sddeep-model-serving", disciplineId: "system-design", competency: "Model Serving & Inference", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "ML system design patterns; Machine Learning Interviews; production inference practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate serving architecture, batching, autoscaling, model routing, canaries, rollback, GPU/CPU cost, latency SLOs, and quality monitoring." }),
+  ...deepQuestions({ prefix: "sddeep-mlops-eval", disciplineId: "system-design", competency: "MLOps & Evaluation", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "chiphuyen/machine-learning-systems-design; mercari/ml-system-design-pattern; LLMOps practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate dataset/version lineage, offline evals, online monitoring, drift detection, human review, rollbacks, SLOs, and feedback loops into training or prompts." }),
 ];
 
 export const QUESTION_BANK: BankQuestion[] = [
@@ -1554,6 +1645,7 @@ export const QUESTION_BANK: BankQuestion[] = [
   // Generated deep banks: 100+ prompts per subcategory.
   ...PRODUCT_DEEP_BANK,
   ...AI_DEEP_BANK,
+  ...SYSTEM_DESIGN_DEEP_BANK,
 ];
 
 // ───────────────────────── Query helpers ─────────────────────────
