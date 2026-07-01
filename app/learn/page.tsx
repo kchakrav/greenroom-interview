@@ -12,7 +12,7 @@ import type { MCQ } from "@/lib/quiz";
 
 type Phase = "setup" | "loading" | "quiz" | "done";
 
-const AREAS = [...DISCIPLINES.map((d) => ({ id: d.id, label: d.label })), { id: "aiml", label: "AI / ML" }];
+const AREAS = DISCIPLINES.map((d) => ({ id: d.id, label: d.label }));
 
 export default function LearnPage() {
   const router = useRouter();

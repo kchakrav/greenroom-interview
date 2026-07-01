@@ -56,12 +56,12 @@ export const DISCIPLINES: Discipline[] = [
     label: "Product Management",
     icon: "Compass",
     roles: [
-      { id: "pm", label: "Product Manager", focusAreas: ["Product Sense", "Execution", "Analytics / Metrics", "Behavioral"] },
-      { id: "tpm", label: "Technical PM", focusAreas: ["Technical Depth", "Product Sense", "Execution", "Stakeholder Mgmt"] },
-      { id: "growthpm", label: "Growth PM", focusAreas: ["Experimentation", "Metrics", "Product Sense", "Behavioral"] },
-      { id: "platformpm", label: "Platform PM", focusAreas: ["System / API Thinking", "Strategy", "Execution", "Stakeholder Mgmt"] },
-      { id: "aipm", label: "AI / ML PM", focusAreas: ["AI Product Sense", "Metrics", "Execution", "Behavioral"] },
-      { id: "gpm", label: "Group PM / Lead", focusAreas: ["Strategy", "Stakeholder Mgmt", "Product Sense", "Leadership"] },
+      { id: "pm", label: "Product Manager", focusAreas: ["Product Sense", "Operational Metrics", "Execution & Prioritization", "Pricing & Packaging", "Leadership & Stakeholder Influence"] },
+      { id: "tpm", label: "Technical PM", focusAreas: ["Technical Product Thinking", "Platform Thinking", "Execution & Prioritization", "Stakeholder Mgmt"] },
+      { id: "growthpm", label: "Growth PM", focusAreas: ["Growth & Experimentation", "Operational Metrics", "Pricing & Packaging", "Product Sense"] },
+      { id: "platformpm", label: "Platform PM", focusAreas: ["Platform Thinking", "System / API Thinking", "Product Strategy", "Operational Metrics"] },
+      { id: "aipm", label: "AI / ML PM", focusAreas: ["AI Product Sense", "AI Evaluation & Metrics", "Responsible AI & Safety", "Prompting & Context Engineering"] },
+      { id: "gpm", label: "Group PM / Lead", focusAreas: ["Product Strategy", "Go-to-Market", "Product Operations", "Leadership & Stakeholder Influence"] },
     ],
   },
   {
@@ -74,6 +74,17 @@ export const DISCIPLINES: Discipline[] = [
       { id: "analytics", label: "Analytics Engineer", focusAreas: ["SQL / Modeling", "Pipelines", "Metrics", "Behavioral"] },
       { id: "dsml", label: "ML Engineer (Data)", focusAreas: ["Coding", "ML System Design", "Stats", "Behavioral"] },
       { id: "research", label: "Research Scientist", focusAreas: ["Research Depth", "ML Theory", "Experiment Design", "Behavioral"] },
+    ],
+  },
+  {
+    id: "aiml",
+    label: "AI / Machine Learning",
+    icon: "BrainCircuit",
+    roles: [
+      { id: "aipm", label: "AI Product Manager", focusAreas: ["AI Product Sense", "AI Evaluation & Metrics", "AI UX", "Responsible AI & Safety"] },
+      { id: "aieng", label: "AI Engineer", focusAreas: ["LLM Fundamentals", "RAG & Retrieval", "Agents & Tool Use", "MLOps & Observability"] },
+      { id: "mleng", label: "Machine Learning Engineer", focusAreas: ["ML Concepts", "System Design", "MLOps & Observability", "Data & Labeling"] },
+      { id: "genai", label: "Generative AI Engineer", focusAreas: ["Prompting & Context Engineering", "AI Evaluation & Metrics", "AI Security", "AI FinOps"] },
     ],
   },
   {
@@ -144,8 +155,9 @@ export function competenciesFor(disciplineId: string, roleId: string, seniorityI
   const isLeader = LEADER_LEVELS.includes(seniorityId);
   const base: Record<string, string[]> = {
     engineering: ["Problem Solving", "Technical Depth", "Code/Design Quality", "Communication", "Collaboration"],
-    product: ["Product Sense", "Analytical Thinking", "Execution", "Communication", "Stakeholder Influence"],
+    product: ["Product Sense", "Analytical Thinking", "Execution", "Strategic Thinking", "Stakeholder Influence"],
     data: ["Analytical Rigor", "Technical Skill", "Business Insight", "Communication", "Experiment Design"],
+    aiml: ["AI Product Sense", "LLM Fundamentals", "RAG & Agents", "AI Evaluation", "Responsible AI"],
     design: ["Design Craft", "User Empathy", "Critique & Iteration", "Communication", "Collaboration"],
     sales: ["Discovery", "Objection Handling", "Business Acumen", "Communication", "Resilience"],
     marketing: ["Marketing Strategy", "Analytical Thinking", "Creativity & Messaging", "Communication", "Execution"],
