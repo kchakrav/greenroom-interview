@@ -6,6 +6,7 @@ import { Dumbbell, Map, LineChart, Mic, GraduationCap, Database, Library } from 
 import { useSession } from "next-auth/react";
 import { loadProgress, xpForLevel, type Progress } from "@/components/gamify";
 import UserMenu from "@/components/UserMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const LINKS = [
   { href: "/", label: "Practice", icon: Mic },
@@ -56,6 +57,7 @@ export default function Nav() {
             <span className="text-ink-secondary">🔥 {p.streak}d</span>
           </div>
         )}
+        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

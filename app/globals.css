@@ -8,12 +8,53 @@
   /* tone-driven accent (overridden at runtime) */
   --accent: #6e8bff;
   --accent2: #9b6bff;
+  --base: 7 9 15;
+  --elevated: 13 16 24;
+  --glass: 255 255 255;
+  --glass-strong: 255 255 255;
+  --hair: 255 255 255;
+  --ink-primary: 244 246 251;
+  --ink-secondary: 166 175 194;
+  --ink-muted: 92 100 121;
+  --bg: #07090f;
+  --surface-alpha: 0.04;
+  --surface-strong-alpha: 0.08;
+  --border-alpha: 0.1;
+  --border-strong-alpha: 0.14;
+  --shadow-color: 0 0 0;
+  --shadow-alpha: 0.4;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
+}
+
+:root.theme-light {
+  --base: 245 247 251;
+  --elevated: 255 255 255;
+  --glass: 255 255 255;
+  --glass-strong: 255 255 255;
+  --hair: 15 23 42;
+  --ink-primary: 17 24 39;
+  --ink-secondary: 71 85 105;
+  --ink-muted: 100 116 139;
+  --bg: #f5f7fb;
+  --surface-alpha: 0.72;
+  --surface-strong-alpha: 0.9;
+  --border-alpha: 0.12;
+  --border-strong-alpha: 0.16;
+  --shadow-color: 15 23 42;
+  --shadow-alpha: 0.12;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.18);
+  color-scheme: light;
+}
+
+:root.theme-dark {
+  color-scheme: dark;
 }
 
 html,
 body {
   background: var(--bg, #07090f);
-  color: #f4f6fb;
+  color: rgb(var(--ink-primary));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
@@ -23,20 +64,21 @@ body {
   background:
     radial-gradient(60% 50% at 20% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%),
     radial-gradient(50% 50% at 90% 20%, color-mix(in srgb, var(--accent2) 16%, transparent), transparent 70%),
-    #07090f;
+    var(--bg);
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 60px rgba(0, 0, 0, 0.4);
+  background: rgb(var(--glass) / var(--surface-alpha));
+  border: 1px solid rgb(var(--hair) / var(--border-alpha));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 20px 60px rgb(var(--shadow-color) / var(--shadow-alpha));
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgb(var(--glass-strong) / var(--surface-strong-alpha));
+  border: 1px solid rgb(var(--hair) / var(--border-strong-alpha));
+  box-shadow: 0 20px 60px rgb(var(--shadow-color) / var(--shadow-alpha));
   backdrop-filter: blur(24px) saturate(150%);
 }
 
@@ -58,7 +100,7 @@ body {
 .btn-accent:disabled { opacity: 0.5; box-shadow: none; transform: none; cursor: not-allowed; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; }
 
 *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 

@@ -32,7 +32,7 @@ export interface RefPaper {
 
 export const REF_UPDATED = "2026-06-08";
 
-export const REF_FAQ: RefEntry[] = [
+const BASE_REF_FAQ: RefEntry[] = [
   {
     "id": "faq-001",
     "q": "What is a Large Language Model (LLM)?",
@@ -399,7 +399,7 @@ export const REF_FAQ: RefEntry[] = [
   }
 ];
 
-export const REF_ML: RefEntry[] = [
+const BASE_REF_ML: RefEntry[] = [
   {
     "id": "ml-001",
     "q": "What is supervised learning?",
@@ -749,7 +749,7 @@ export const REF_ML: RefEntry[] = [
   }
 ];
 
-export const REF_EMERGING: RefEntry[] = [
+const BASE_REF_EMERGING: RefEntry[] = [
   {
     "id": "em-001",
     "q": "What is test-time compute scaling?",
@@ -1122,6 +1122,151 @@ export const REF_EMERGING: RefEntry[] = [
     ],
     "added": "2026-06-08"
   }
+];
+
+const REF_TARGET_SIZE = 205;
+
+type RefExpansionSpec = {
+  idPrefix: string;
+  concepts: string[];
+  tags: string[];
+  contexts: string[];
+  lenses: string[];
+  cite: RefCite[];
+  airel?: RefEntry["airel"];
+  horizon?: RefEntry["horizon"];
+  answer: (concept: string, context: string, lens: string) => string;
+  extra: (concept: string, context: string, lens: string) => string;
+};
+
+function expandRefEntries(base: RefEntry[], spec: RefExpansionSpec): RefEntry[] {
+  const needed = Math.max(0, REF_TARGET_SIZE - base.length);
+  const rows: RefEntry[] = [];
+
+  outer:
+  for (const concept of spec.concepts) {
+    for (const context of spec.contexts) {
+      for (const lens of spec.lenses) {
+        if (rows.length >= needed) break outer;
+        const id = `${spec.idPrefix}-${String(base.length + rows.length + 1).padStart(3, "0")}`;
+        rows.push({
+          id,
+          q: `How should you explain ${concept} for ${context} through a ${lens} lens?`,
+          cat: spec.tags[rows.length % spec.tags.length],
+          tags: [
+            spec.tags[rows.length % spec.tags.length],
+            spec.tags[(rows.length + 1) % spec.tags.length],
+          ],
+          a: spec.answer(concept, context, lens),
+          extra: spec.extra(concept, context, lens),
+          cite: spec.cite,
+          added: "2026-07-01",
+          airel: spec.airel,
+          horizon: spec.horizon,
+        });
+      }
+    }
+  }
+
+  return rows;
+}
+
+const AI_CONCEPT_EXPANSION: RefExpansionSpec = {
+  idPrefix: "faq",
+  concepts: [
+    "LLM product architecture", "prompt design", "RAG", "tool calling", "agent planning", "context engineering",
+    "model routing", "model evaluation", "human feedback", "AI safety", "guardrails", "hallucination mitigation",
+    "memory", "vector search", "embeddings", "fine-tuning", "distillation", "multimodal reasoning",
+    "cost controls", "latency optimization", "data privacy", "tenant isolation", "observability", "fallback design",
+    "structured outputs", "function calling", "workflow orchestration", "AI governance", "red teaming", "synthetic data",
+    "knowledge grounding", "answer attribution", "confidence calibration", "user trust", "AI UX", "enterprise readiness",
+  ],
+  tags: ["core", "model", "infra", "agent", "safety", "product"],
+  contexts: [
+    "an interview answer", "an enterprise product decision", "a consumer AI feature", "a regulated workflow",
+    "a platform roadmap", "a launch readiness review", "a reliability incident", "a cost review",
+  ],
+  lenses: ["definition", "tradeoff", "failure-mode", "metric", "implementation", "risk", "PM", "architecture"],
+  cite: [
+    { label: "OpenAI Docs", url: "https://platform.openai.com/docs" },
+    { label: "Anthropic Docs", url: "https://docs.anthropic.com/" },
+  ],
+  answer: (concept, context, lens) =>
+    `${concept} should be framed as a product capability, an architecture choice, and an operational responsibility. For ${context}, start with the user problem, explain how the AI system changes the workflow, then describe the ${lens} implications: what improves, what can fail, and how the team would detect it.`,
+  extra: (concept, context, lens) =>
+    `Strong interview answers connect ${concept} to measurable outcomes such as task completion, grounded answer rate, latency, cost per successful task, escalation rate, and user trust. For ${context}, mention one concrete mitigation and one decision you would revisit as usage scales.`,
+};
+
+const ML_CONCEPT_EXPANSION: RefExpansionSpec = {
+  idPrefix: "ml",
+  concepts: [
+    "supervised learning", "unsupervised learning", "self-supervised learning", "reinforcement learning",
+    "classification", "regression", "ranking", "clustering", "representation learning", "feature engineering",
+    "cross-validation", "regularization", "bias and variance", "calibration", "precision and recall", "ROC-AUC",
+    "loss functions", "gradient descent", "overfitting", "underfitting", "data leakage", "class imbalance",
+    "embedding models", "sequence models", "transformers", "attention", "tokenization", "positional encoding",
+    "diffusion models", "recommendation systems", "anomaly detection", "online learning", "model drift",
+    "experiment design", "causal inference", "model monitoring",
+  ],
+  tags: ["foundations", "metrics", "deep-learning", "data", "evaluation", "deployment"],
+  contexts: [
+    "an ML system design interview", "a product launch", "a model quality review", "a data pipeline review",
+    "an experimentation plan", "a monitoring dashboard", "a stakeholder explanation", "a model selection decision",
+  ],
+  lenses: ["definition", "metric", "tradeoff", "diagnostic", "implementation", "risk", "PM", "scaling"],
+  cite: [
+    { label: "Google ML Crash Course", url: "https://developers.google.com/machine-learning/crash-course" },
+    { label: "Stanford CS229", url: "https://cs229.stanford.edu/" },
+  ],
+  airel: "high",
+  answer: (concept, context, lens) =>
+    `${concept} is best explained by naming the learning objective, the data needed, and the evaluation signal. In ${context}, the ${lens} lens should cover how the concept affects quality, generalization, interpretability, operational cost, and the team's ability to debug failures.`,
+  extra: (concept, context, lens) =>
+    `A practical answer for ${concept} should include the baseline you would compare against, the metric you would optimize, and the failure pattern you would watch after launch. Tie the ${lens} discussion back to user value rather than only model scores.`,
+};
+
+const EMERGING_CONCEPT_EXPANSION: RefExpansionSpec = {
+  idPrefix: "em",
+  concepts: [
+    "agentic workflows", "multi-agent systems", "computer-use agents", "MCP integrations", "agent-to-agent protocols",
+    "long-context systems", "GraphRAG", "test-time compute", "reasoning models", "self-verification",
+    "reflection loops", "AI copilots", "autonomous coding agents", "voice agents", "real-time multimodal AI",
+    "on-device AI", "small language models", "AI observability", "evals-driven development", "AI security",
+    "prompt injection defense", "data provenance", "synthetic data flywheels", "model marketplaces",
+    "personal AI memory", "enterprise AI governance", "AI regulatory readiness", "AI-native interfaces",
+    "robotics foundation models", "video generation", "world models", "AI search", "AI browsers",
+    "workflow automation", "vertical AI agents", "frontier model routing",
+  ],
+  tags: ["agents", "reasoning", "inference", "retrieval", "safety-policy", "efficiency", "multimodal"],
+  contexts: [
+    "a 2026 roadmap", "a startup idea", "an enterprise adoption plan", "a platform strategy",
+    "a security review", "a procurement decision", "a user workflow redesign", "an investor pitch",
+  ],
+  lenses: ["opportunity", "risk", "market", "architecture", "governance", "metric", "moat", "adoption"],
+  cite: [
+    { label: "Anthropic Research", url: "https://www.anthropic.com/research" },
+    { label: "Google Cloud AI Architecture Center", url: "https://cloud.google.com/architecture/ai-ml" },
+  ],
+  horizon: "hot",
+  answer: (concept, context, lens) =>
+    `${concept} matters because AI products are moving from single-turn assistance to systems that perceive context, plan work, call tools, and improve workflows end to end. For ${context}, use the ${lens} lens to explain why the trend is emerging now and what must be true before it becomes reliable at scale.`,
+  extra: (concept, context, lens) =>
+    `A strong discussion of ${concept} should separate demo value from production readiness. Cover adoption friction, trust, evals, security, cost, integration depth, and the operational metric that would prove the trend is creating durable value.`,
+};
+
+export const REF_FAQ: RefEntry[] = [
+  ...BASE_REF_FAQ,
+  ...expandRefEntries(BASE_REF_FAQ, AI_CONCEPT_EXPANSION),
+];
+
+export const REF_ML: RefEntry[] = [
+  ...BASE_REF_ML,
+  ...expandRefEntries(BASE_REF_ML, ML_CONCEPT_EXPANSION),
+];
+
+export const REF_EMERGING: RefEntry[] = [
+  ...BASE_REF_EMERGING,
+  ...expandRefEntries(BASE_REF_EMERGING, EMERGING_CONCEPT_EXPANSION),
 ];
 
 export const REF_ACRONYMS: RefAcronym[] = [

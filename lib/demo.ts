@@ -36,13 +36,17 @@ function questionBank(config: StageConfig): string[] {
   const { discipline, role } = lookup(config.disciplineId, config.roleId, config.seniorityId);
   const isLeader = LEADER_LEVELS.includes(config.seniorityId);
 
-  // Focused drill: 2 short questions on a single competency.
+  // Focused drill: draw from the expanded bank for the selected competency.
   if (config.drill) {
     const c = config.drill.competency;
-    return [
-      `Quick drill on ${c}. Tell me about a specific time ${c.toLowerCase()} really mattered in your work — what did you do?`,
-      `Good. One more on ${c}: walk me through a moment where it was tested and what you learned.`,
-    ];
+    const count = config.drill.questionCount ?? 10;
+    const seeded = seedQuestions(config.disciplineId, config.seniorityId, count, [c]);
+    if (seeded.length) return seeded.map((q) => q.prompt);
+    return Array.from({ length: count }, (_, i) =>
+      i === 0
+        ? `Quick drill on ${c}. Tell me about a specific time ${c.toLowerCase()} really mattered in your work — what did you do?`
+        : `Let's stay on ${c}: walk me through another example, tradeoff, or lesson that shows how you handle this competency.`
+    );
   }
   const common = [
     "Tell me about a time you faced a hard tradeoff with limited information. Walk me through what you actually did.",

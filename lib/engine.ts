@@ -36,12 +36,18 @@ export function interviewerSystemPrompt(config: StageConfig): string {
     : "";
 
   if (config.drill) {
+    const drillQuestionCount = config.drill.questionCount ?? 10;
+    const drillPool = seedQuestions(config.disciplineId, config.seniorityId, drillQuestionCount, [config.drill.competency]);
     return `You are a friendly interview coach running a FOCUSED DRILL on the single competency "${config.drill.competency}" for a ${seniority.label} ${role.label}.
 
 PERSONA / TONE: ${TONE_PERSONA[config.tone]}
 
-Ask exactly TWO short, past-behavior questions that specifically probe ${config.drill.competency} ("Tell me about a time…", "Walk me through what YOU did…"). One adaptive follow-up is fine. Keep turns short and spoken. Be encouraging — this is practice.
-After the candidate answers the second question, give a one-line wrap and end with the token [[END]] on its own.
+Ask exactly ${drillQuestionCount} short, focused questions that specifically probe ${config.drill.competency}. Prefer past-behavior questions ("Tell me about a time…", "Walk me through what YOU did…"), but include scenario, tradeoff, diagnosis, and reflection questions when useful. Ask ONE question at a time. One adaptive follow-up is fine when the answer is thin, but keep momentum and cover the full drill.
+
+QUESTION POOL (draw from or adapt these; do not read mechanically):
+${drillPool.map((s) => `- ${s.prompt} [src: ${s.source}]`).join("\n")}
+
+After the candidate answers the ${drillQuestionCount}th question, give a one-line wrap and end with the token [[END]] on its own.
 Respond ONLY as the interviewer's spoken words — no markdown, lists, or scores.`;
   }
 

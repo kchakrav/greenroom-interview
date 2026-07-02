@@ -14,7 +14,7 @@ export interface StageConfig {
   modalities: Modality[];
   durationMin: number;
   language: string;
-  drill?: { competency: string }; // focused single-competency drill
+  drill?: { competency: string; questionCount?: number }; // focused single-competency drill
   pathStep?: { pathId: string; stepIndex: number }; // launched from a learning path
   jobContext?: { jobDescription?: string; company?: string; resume?: string };
 }

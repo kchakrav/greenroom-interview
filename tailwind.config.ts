@@ -9,12 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        base: "#07090F",
-        elevated: "#0D1018",
-        glass: "rgba(255,255,255,0.04)",
-        "glass-strong": "rgba(255,255,255,0.08)",
-        hair: "rgba(255,255,255,0.10)",
-        ink: { primary: "#F4F6FB", secondary: "#A6AFC2", muted: "#5C6479" },
+        base: "rgb(var(--base) / <alpha-value>)",
+        elevated: "rgb(var(--elevated) / <alpha-value>)",
+        glass: "rgb(var(--glass) / <alpha-value>)",
+        "glass-strong": "rgb(var(--glass-strong) / <alpha-value>)",
+        hair: "rgb(var(--hair) / <alpha-value>)",
+        ink: {
+          primary: "rgb(var(--ink-primary) / <alpha-value>)",
+          secondary: "rgb(var(--ink-secondary) / <alpha-value>)",
+          muted: "rgb(var(--ink-muted) / <alpha-value>)",
+        },
         accent: { DEFAULT: "#6E8BFF", 2: "#9B6BFF" },
         signal: { ok: "#3FE0A5", warn: "#FFC56E", bad: "#FF6E8B" },
       },
