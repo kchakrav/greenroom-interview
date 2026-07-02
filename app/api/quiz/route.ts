@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateQuiz } from "@/lib/engine";
 import { demoMode, shouldFallbackToDemo } from "@/lib/demo";
 import { quizQuestions } from "@/lib/quiz";
+import { databaseQuestionsEnabled, queryQuestionStore } from "@/lib/questionStore";
+import type { MCQ } from "@/lib/quiz";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -15,6 +17,10 @@ export async function POST(req: NextRequest) {
       count?: number;
     };
     const n = Math.min(Math.max(count ?? 6, 3), 120);
+    if (databaseQuestionsEnabled()) {
+      const db = await queryQuestionStore({ kind: "concept", disciplineId, topic, page: 1, pageSize: n });
+      if (db.items.length > 0) return NextResponse.json({ questions: db.items as MCQ[], demo: demoMode(), source: db.source, databaseFallback: db.databaseFallback });
+    }
     // Product and AI/ML have deep, source-attributed banks. Serve those directly
     // so 100-question learning sets use the curated coverage instead of making
     // a very large live model-generation request.

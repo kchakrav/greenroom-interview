@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [favoriteAggregates, setFavoriteAggregates] = useState<FavoriteAggregate[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [seedStatus, setSeedStatus] = useState<string | null>(null);
 
   useEffect(() => setAttempts(loadHistory()), []);
 
@@ -208,6 +209,18 @@ export default function AdminPage() {
     });
   }
 
+  async function seedDatabaseQuestions() {
+    setSeedStatus("Seeding question database...");
+    try {
+      const res = await fetch("/api/admin/questions/seed", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Seed failed");
+      setSeedStatus(`Seeded ${data.inserted} question/concept rows.`);
+    } catch (error: any) {
+      setSeedStatus(error?.message ?? "Seed failed");
+    }
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">
       <Nav />
@@ -221,6 +234,7 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button onClick={seedDatabaseQuestions} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Database className="h-4 w-4" /> Seed DB</button>
           <button onClick={exportJSON} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> JSON</button>
           <button onClick={exportCSV} className="glass-strong flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-ink-secondary transition hover:text-ink-primary"><Download className="h-4 w-4" /> CSV</button>
           {(tab === "questions" || tab === "concepts") && (
@@ -231,6 +245,7 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+      {seedStatus && <div className="mt-3 rounded-2xl border border-hair bg-white/[0.04] px-4 py-3 text-sm text-ink-secondary">{seedStatus}</div>}
 
       {/* tabs */}
       <div className="mt-6 flex flex-wrap gap-2">
