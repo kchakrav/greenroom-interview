@@ -33,7 +33,7 @@ const ALL = ["junior", "mid", "senior", "staff", "manager", "senior-manager", "d
 
 interface DeepCategorySpec {
   prefix: string;
-  disciplineId: "product" | "aiml" | "system-design";
+  disciplineId: "product" | "aiml" | "system-design" | "fde";
   competency: string;
   type: QType;
   levels: string[];
@@ -233,6 +233,60 @@ const SD_LENSES = [
   "ML serving, vector retrieval, and evaluation loops",
 ];
 
+const FDE_SCENARIOS = [
+  "A logistics customer says warehouse teams cannot trust the AI rerouting dashboard",
+  "A regional bank wants to unify fraud detection across three acquired systems",
+  "A pharma company wants an internal compound-search assistant with IP constraints",
+  "A public-sector customer needs an AI assistant deployed inside a restricted cloud",
+  "A manufacturer wants predictive maintenance workflows connected to plant-floor systems",
+  "An insurer wants LLM-powered claim summarization across historical claims",
+  "A customer-support organization wants an agent to resolve tier-one tickets",
+  "A sales operations team wants an AI research assistant connected to CRM data",
+  "A healthcare network wants a clinical operations copilot with strict PHI controls",
+  "A financial services customer wants analyst workflows over messy document repositories",
+  "A retail enterprise wants demand-planning agents across legacy ERP systems",
+  "A cybersecurity team wants an alert triage assistant integrated with SIEM tools",
+  "A legal team wants contract review workflows with citations and approval gates",
+  "A construction company wants field-report automation across mobile and back-office systems",
+  "A strategic customer has a technically successful pilot but low user adoption",
+];
+
+const FDE_CHALLENGES = [
+  "the sponsor wants production value in 30 days",
+  "the customer data is fragmented, stale, or inconsistently labeled",
+  "security will not approve broad network or data access",
+  "a hostile lead engineer refuses to give your team VPC access",
+  "latency, cost, and reliability are all blocking rollout",
+  "the model worked in staging but behaves inconsistently in production",
+  "users over-trust AI outputs in a high-impact workflow",
+  "executives demand a launch date that engineering thinks is unrealistic",
+  "the deployment depends on SAP, Salesforce, or legacy SOAP APIs",
+  "the customer wants an LLM in a path with a strict sub-100ms SLA",
+  "legal and compliance require auditability before any launch",
+  "field learnings reveal missing reusable product capabilities",
+  "adoption stalls because the workflow does not match how operators work",
+  "the customer asks for account-specific code that may not generalize",
+  "a production incident threatens trust with the executive sponsor",
+];
+
+const FDE_LENSES = [
+  "discovery questions, success criteria, and non-goals",
+  "decomposition into workstreams, owners, risks, and milestones",
+  "MVP scope, pilot design, and acceptance criteria",
+  "enterprise data access, identity, permissions, and tenant isolation",
+  "RAG architecture, retrieval quality, and source-grounded answers",
+  "agent tool permissions, approvals, and audit logs",
+  "offline evals, regression gates, and human review",
+  "observability traces, runbooks, and incident response",
+  "legacy integration, retries, idempotency, and backfills",
+  "production rollout, change management, and enablement",
+  "customer stakeholder mapping and trust building",
+  "scope-speed-quality tradeoffs under pressure",
+  "field-to-product feedback and reusable pattern extraction",
+  "cost, latency, and model routing decisions",
+  "handoff, internal champion enablement, and support readiness",
+];
+
 const DEEP_CATEGORY_SIZE = 105;
 
 const PRODUCT_DEEP_BANK: BankQuestion[] = [
@@ -292,6 +346,54 @@ const SYSTEM_DESIGN_DEEP_BANK: BankQuestion[] = [
   ...deepQuestions({ prefix: "sddeep-vector", disciplineId: "system-design", competency: "Vector Search & Retrieval", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "RAG and vector search practice; ML system design interviews", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate embeddings, hybrid search, metadata filters, permissions, freshness, reranking, recall metrics, latency, cost, and citation quality." }),
   ...deepQuestions({ prefix: "sddeep-model-serving", disciplineId: "system-design", competency: "Model Serving & Inference", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "ML system design patterns; Machine Learning Interviews; production inference practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate serving architecture, batching, autoscaling, model routing, canaries, rollback, GPU/CPU cost, latency SLOs, and quality monitoring." }),
   ...deepQuestions({ prefix: "sddeep-mlops-eval", disciplineId: "system-design", competency: "MLOps & Evaluation", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "chiphuyen/machine-learning-systems-design; mercari/ml-system-design-pattern; LLMOps practice", count: DEEP_CATEGORY_SIZE, scenarios: SD_SCENARIOS, challenges: SD_CHALLENGES, lenses: SD_LENSES, guidance: "Evaluate dataset/version lineage, offline evals, online monitoring, drift detection, human review, rollbacks, SLOs, and feedback loops into training or prompts." }),
+];
+
+const FDE_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "fdedeep-discovery", disciplineId: "fde", competency: "Customer Discovery & Scoping", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "OpenAI FDE postings; Perspective AI FDE interview guide; Palantir FDSE Delta model", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate customer context gathering, stakeholder mapping, problem framing, success criteria, constraints, non-goals, and the ability to avoid premature solutions." }),
+  ...deepQuestions({ prefix: "fdedeep-decomp", disciplineId: "fde", competency: "Deployment Decomposition", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 5, source: "Exponent FDE/decomposition guides; fde.academy interview guide; Palantir open-ended case practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate decomposition into workstreams, assumptions, owners, dependencies, phased delivery, measurable milestones, risk burn-down, and clear narration under ambiguity." }),
+  ...deepQuestions({ prefix: "fdedeep-ai-deploy", disciplineId: "fde", competency: "AI Deployment & Integration", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OpenAI FDE postings; Bloomberry FDE jobs analysis; forward-deployed AI engineering guides", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate production-grade integration, auth, APIs, cloud/VPC constraints, deployment topology, latency, rollback, ownership, and making AI useful inside real workflows." }),
+  ...deepQuestions({ prefix: "fdedeep-rag-agent", disciplineId: "fde", competency: "RAG & Agentic Workflows", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OpenAI FDE postings; Exponent FDE AI-specific questions; RAG/agent deployment practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate retrieval strategy, permissions-aware context, citations, tool use, agent state, approvals, failure modes, and human-in-the-loop controls." }),
+  ...deepQuestions({ prefix: "fdedeep-evals", disciplineId: "fde", competency: "Evals, Guardrails & Observability", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OpenAI FDE postings; Perspective AI FDE guide; AI observability/eval practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate golden datasets, acceptance thresholds, regression tests, safety guardrails, traces, dashboards, runbooks, escalation paths, and eval-driven roadmap feedback." }),
+  ...deepQuestions({ prefix: "fdedeep-enterprise", disciplineId: "fde", competency: "Enterprise Data & Security", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OpenAI Technical Deployment Lead postings; FDE case-study guides; enterprise AI readiness practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate identity, permissions, auditability, data residency, privacy, network access, tenant isolation, compliance signoff, and secure-by-default rollout planning." }),
+  ...deepQuestions({ prefix: "fdedeep-debug", disciplineId: "fde", competency: "Production Debugging", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "FDE interview guides; SRE incident response; production AI deployment practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate systematic triage, hypothesis ordering, telemetry, reproduction strategy, rollback, customer communication, root cause, and durable prevention." }),
+  ...deepQuestions({ prefix: "fdedeep-stakeholder", disciplineId: "fde", competency: "Stakeholder Communication", type: "behavioral", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Perspective AI FDE guide; fde.academy client simulation round; Palantir FDSE customer model", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate audience adaptation, trust-building, holding technical boundaries, executive communication, conflict handling, and turning disagreement into a concrete next step." }),
+  ...deepQuestions({ prefix: "fdedeep-adoption", disciplineId: "fde", competency: "Adoption & Change Management", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "OpenAI Technical Deployment Lead postings; FDE deployment guides; enterprise change-management practice", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate workflow fit, internal champion enablement, training, rollout sequencing, adoption metrics, feedback loops, and whether technical success becomes operational value." }),
+  ...deepQuestions({ prefix: "fdedeep-field-product", disciplineId: "fde", competency: "Field-to-Product Feedback", type: "strategy", levels: ["senior", "staff", "manager", "director"], difficulty: 5, source: "OpenAI FDE postings; Palantir Dev versus Delta model; Awesome-FDE-Roadmap", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate reusable pattern extraction, account-specific versus platform decisions, roadmap signal quality, product feedback, internal documentation, and operating leverage across deployments." }),
+];
+
+const FDE_SEED_BANK: BankQuestion[] = [
+  { id: "fde-case-logistics-dashboard", disciplineId: "fde", competency: "Deployment Decomposition", levels: ["mid", "senior", "staff"], type: "case",
+    prompt: "A logistics customer says warehouse teams cannot trust the AI rerouting dashboard. Diagnose the situation and propose the first 30 days of work.",
+    guidance: "Clarify what 'cannot trust' means, map stakeholders and workflows, inspect data freshness and labels, define success criteria, propose a narrow pilot, instrument adoption and quality, and sequence fixes with owners.",
+    source: "Perspective AI FDE case-study patterns; Exponent decomposition guide; original GreenRoom prompt", difficulty: 5 },
+  { id: "fde-tech-bank-llm-latency", disciplineId: "fde", competency: "AI Deployment & Integration", levels: ["senior", "staff"], type: "system-design",
+    prompt: "A bank wants sub-100ms fraud detection but asks to put an LLM in the critical path. What architecture do you propose?",
+    guidance: "Separate the real-time decision path from explanatory AI. Use deterministic/fast models or rules for the p95 SLA, async LLM analysis for analyst context, clear escalation, audit logs, and evals for both decisions and explanations.",
+    source: "Awesome-FDE-Roadmap case pattern; OpenAI FDE role requirements; original GreenRoom prompt", difficulty: 5 },
+  { id: "fde-case-pharma-compounds", disciplineId: "fde", competency: "Enterprise Data & Security", levels: ["senior", "staff"], type: "case",
+    prompt: "A pharma company wants an internal compound-search assistant with IP, legal, and compliance constraints. How do you scope the deployment?",
+    guidance: "Start with data boundaries, user groups, permission model, source systems, citation requirements, eval set, red-team cases, auditability, and a limited workflow pilot before broad search.",
+    source: "OpenAI FDE postings; Exponent FDE guide; original GreenRoom prompt", difficulty: 5 },
+  { id: "fde-debug-agent-staging", disciplineId: "fde", competency: "Production Debugging", levels: ["mid", "senior", "staff"], type: "technical",
+    prompt: "An AI agent worked in staging but returns inconsistent results after production rollout. Walk through your debugging approach.",
+    guidance: "Compare inputs, prompts, model versions, retrieval corpus, permissions, tool responses, latency/timeouts, traffic mix, rate limits, eval traces, and customer-specific data. Stabilize first, then root-cause and add regression coverage.",
+    source: "fde.academy AI agent debugging pattern; production AI observability practice", difficulty: 4 },
+  { id: "fde-sim-hostile-engineer", disciplineId: "fde", competency: "Stakeholder Communication", levels: ["mid", "senior", "staff"], type: "behavioral",
+    prompt: "The customer's lead engineer dislikes your product and refuses to grant network access. How do you handle the relationship and unblock the work?",
+    guidance: "Treat it as a trust and risk problem. Understand concerns privately, acknowledge valid security/ownership fears, offer least-privilege access, co-design deployment steps, document guardrails, and create shared wins.",
+    source: "Awesome-FDE-Roadmap stakeholder pattern; client simulation interview practice", difficulty: 4 },
+  { id: "fde-adoption-low", disciplineId: "fde", competency: "Adoption & Change Management", levels: ["mid", "senior", "staff", "manager"], type: "case",
+    prompt: "The deployment is technically stable, but only 12% of target users use it after 90 days. What do you do?",
+    guidance: "Segment adoption by team/workflow, shadow users, inspect value moments and friction, identify champions, revise training and workflow integration, instrument leading indicators, and decide whether to pivot the pilot scope.",
+    source: "OpenAI Technical Deployment Lead postings; fde.academy deployment scenario patterns", difficulty: 4 },
+  { id: "fde-evals-runbook", disciplineId: "fde", competency: "Evals, Guardrails & Observability", levels: ["mid", "senior", "staff"], type: "technical",
+    prompt: "What evals, dashboards, and runbooks would you require before handing off an enterprise RAG assistant to the customer's team?",
+    guidance: "Cover golden tasks, permissions tests, hallucination/citation checks, latency and cost SLOs, trace dashboards, incident runbooks, escalation owners, rollback, support intake, and scheduled eval refresh.",
+    source: "OpenAI eval-driven deployment expectations; DEV FDE playbook; AI observability practice", difficulty: 4 },
+  { id: "fde-field-product", disciplineId: "fde", competency: "Field-to-Product Feedback", levels: ["senior", "staff", "manager"], type: "strategy",
+    prompt: "A customer-specific integration reveals a missing platform capability that three other accounts also need. How do you turn field signal into product leverage?",
+    guidance: "Quantify recurrence and impact, separate one-off from reusable need, write a crisp product brief, include examples and constraints, propose a generic abstraction, and align product/engineering on sequencing.",
+    source: "Palantir Dev versus Delta model; OpenAI FDE field feedback expectations", difficulty: 5 },
 ];
 
 export const QUESTION_BANK: BankQuestion[] = [
@@ -1643,9 +1745,11 @@ export const QUESTION_BANK: BankQuestion[] = [
     source: "AI PM behavioral interview practice; Aakash Gupta AI PM Interview Guide 2026", difficulty: 4 },
 
   // Generated deep banks: 100+ prompts per subcategory.
+  ...FDE_SEED_BANK,
   ...PRODUCT_DEEP_BANK,
   ...AI_DEEP_BANK,
   ...SYSTEM_DESIGN_DEEP_BANK,
+  ...FDE_DEEP_BANK,
 ];
 
 // ───────────────────────── Query helpers ─────────────────────────

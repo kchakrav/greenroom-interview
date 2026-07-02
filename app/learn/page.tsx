@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Check, X, Loader2, ArrowRight, RotateCcw } from "lucide-react";
 import Nav from "@/components/Nav";
+import FavoriteButton from "@/components/FavoriteButton";
 import { useStage } from "@/lib/useStage";
 import { DISCIPLINES, lookup } from "@/lib/taxonomy";
-import { quizTopics } from "@/lib/quiz";
+import { queryMCQ, quizTopics } from "@/lib/quiz";
 import { markStepComplete } from "@/lib/pathProgress";
 import type { MCQ } from "@/lib/quiz";
 
@@ -25,7 +26,19 @@ export default function LearnPage() {
   useEffect(() => {
     try {
       const hint = localStorage.getItem("aii-learn-area");
-      if (hint) { setDisciplineId(hint); setTopic("all"); localStorage.removeItem("aii-learn-area"); }
+      const topicHint = localStorage.getItem("aii-learn-topic");
+      if (hint) {
+        setDisciplineId(hint);
+        setTopic(topicHint || "all");
+        localStorage.removeItem("aii-learn-area");
+        localStorage.removeItem("aii-learn-topic");
+      }
+      const favoriteIdsHint = localStorage.getItem("aii-learn-favorite-ids");
+      if (favoriteIdsHint) {
+        const ids = JSON.parse(favoriteIdsHint);
+        if (Array.isArray(ids)) setFavoritePracticeIds(ids.filter((id): id is string => typeof id === "string"));
+        localStorage.removeItem("aii-learn-favorite-ids");
+      }
     } catch {}
   }, []);
   const [phase, setPhase] = useState<Phase>("setup");
@@ -34,13 +47,39 @@ export default function LearnPage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [answers, setAnswers] = useState<{ correct: boolean }[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoritePracticeIds, setFavoritePracticeIds] = useState<string[]>([]);
 
   const topics = quizTopics(disciplineId);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   async function start() {
     setPhase("loading");
     setErr(null);
     try {
+      if (favoritePracticeIds.length > 0) {
+        const byId = new Map(queryMCQ().map((item) => [item.id, item]));
+        const favoriteQuestions = favoritePracticeIds.map((id) => byId.get(id)).filter((item): item is MCQ => Boolean(item));
+        if (favoriteQuestions.length > 0) {
+          setQs(favoriteQuestions);
+          setI(0);
+          setPicked(null);
+          setAnswers([]);
+          setPhase("quiz");
+          return;
+        }
+      }
       const r = await fetch("/api/quiz", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ disciplineId, topic, count: LEARN_QUESTION_COUNT }),
@@ -64,10 +103,20 @@ export default function LearnPage() {
     }
   }
 
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `concept:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
+
   const score = answers.filter((a) => a.correct).length;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-5xl px-6 py-10">
       <Nav />
       <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight md:text-4xl">
         <GraduationCap className="h-7 w-7" style={{ color: "var(--accent)" }} /> Learn the <span className="accent-text">concepts</span>.
@@ -88,7 +137,14 @@ export default function LearnPage() {
             {topics.map((t) => <Chip key={t} active={topic === t} onClick={() => setTopic(t)}>{t}</Chip>)}
           </div>
           {err && <p className="mt-4 text-sm text-signal-bad">{err}</p>}
-          <button onClick={start} className="btn-accent mt-7 rounded-full px-8 py-3">Start 100-question set →</button>
+          {favoritePracticeIds.length > 0 && (
+            <p className="mt-4 rounded-2xl bg-yellow-400/10 px-4 py-3 text-sm text-yellow-200">
+              Ready to practice {favoritePracticeIds.length} favorited concept question{favoritePracticeIds.length === 1 ? "" : "s"}.
+            </p>
+          )}
+          <button onClick={start} className="btn-accent mt-7 rounded-full px-8 py-3">
+            {favoritePracticeIds.length > 0 ? "Practice favorites →" : "Start 100-question set →"}
+          </button>
         </motion.div>
       )}
 
@@ -100,15 +156,24 @@ export default function LearnPage() {
 
       {phase === "quiz" && qs[i] && (
         <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass mt-8 rounded-3xl p-8">
-          <div className="mb-3 flex items-center justify-between text-xs text-ink-muted">
+          <div className="mb-3 flex items-center justify-between gap-3 text-xs text-ink-muted">
             <span>Question {i + 1} of {qs.length}</span>
-            <span>{qs[i].topic}</span>
+            <div className="flex items-center gap-2">
+              <span>{qs[i].topic}</span>
+              <FavoriteButton
+                kind="concept"
+                questionId={qs[i].id}
+                initialActive={favoriteIds.has(`concept:${qs[i].id}`)}
+                snapshot={{ title: qs[i].question, detail: qs[i].explanation, disciplineId: qs[i].disciplineId, topic: qs[i].topic, source: qs[i].source }}
+                onChange={(active) => setFavorite(qs[i].id, active)}
+              />
+            </div>
           </div>
           <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
             <div className="h-full btn-accent" style={{ width: `${((i + (picked !== null ? 1 : 0)) / qs.length) * 100}%` }} />
           </div>
           <h2 className="mt-5 text-xl text-ink-primary">{qs[i].question}</h2>
-          <div className="mt-5 space-y-2">
+          <div className="mt-5 grid gap-2 lg:grid-cols-2">
             {qs[i].options.map((opt, idx) => {
               const isCorrect = idx === qs[i].correctIndex;
               const chosen = picked === idx;

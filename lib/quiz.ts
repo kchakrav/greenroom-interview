@@ -387,6 +387,59 @@ const AI_PM_CONCEPT_MCQ: MCQ[] = [
     source: "Enterprise AI product practice; AI PM interview kit" },
 ];
 
+const FDE_CONCEPT_MCQ: MCQ[] = [
+  { id: "fdeq-role", disciplineId: "fde", topic: "Customer Discovery & Scoping",
+    question: "What most distinguishes a Forward Deployed Engineer from a traditional sales engineer?",
+    options: ["They carry quota", "They own production technical outcomes and write deployment code", "They only create slide decks", "They avoid customer contact"], correctIndex: 1,
+    explanation: "FDEs are customer-facing builders. They scope, build, deploy, and stabilize systems rather than only demoing or handing off advice.",
+    source: "Palantir Dev versus Delta; OpenAI FDE postings" },
+  { id: "fdeq-one-customer", disciplineId: "fde", topic: "Field-to-Product Feedback",
+    question: "Palantir's classic FDSE model is often summarized as…",
+    options: ["One capability, many customers", "One customer, many capabilities", "One model, no customization", "One dashboard, no code"], correctIndex: 1,
+    explanation: "Forward deployed engineers focus on making many capabilities work for one specific customer, then feeding reusable learning back into the platform.",
+    source: "Palantir Dev versus Delta model" },
+  { id: "fdeq-decomp", disciplineId: "fde", topic: "Deployment Decomposition",
+    question: "In an FDE decomposition interview, the most common failure mode is…",
+    options: ["Asking too many clarifying questions", "Jumping to a solution before clarifying goals and constraints", "Mentioning stakeholders", "Defining success criteria"], correctIndex: 1,
+    explanation: "The round grades the process: clarify the business goal, data, stakeholders, constraints, and risks before choosing a plan.",
+    source: "Exponent decomposition guide; Perspective AI FDE interview guide" },
+  { id: "fdeq-rag-prod", disciplineId: "fde", topic: "RAG & Agentic Workflows",
+    question: "For an enterprise RAG deployment, the FDE should treat permissions as…",
+    options: ["A UI concern only", "Part of retrieval and answer generation from the start", "Something to add after launch", "Unnecessary if documents are internal"], correctIndex: 1,
+    explanation: "Enterprise RAG must enforce source permissions during retrieval/context assembly, not just in the frontend.",
+    source: "OpenAI FDE postings; enterprise RAG deployment practice" },
+  { id: "fdeq-evals", disciplineId: "fde", topic: "Evals, Guardrails & Observability",
+    question: "Why are evals a core FDE deliverable for AI deployments?",
+    options: ["They replace customer adoption", "They create repeatable acceptance and regression gates for production behavior", "They make observability unnecessary", "They prove every answer is correct"], correctIndex: 1,
+    explanation: "Evals let FDEs define launch thresholds, catch regressions, compare versions, and communicate reliability to customers.",
+    source: "OpenAI FDE postings; AI eval and observability practice" },
+  { id: "fdeq-enterprise-ready", disciplineId: "fde", topic: "Enterprise Data & Security",
+    question: "Enterprise readiness for an AI FDE deployment usually includes…",
+    options: ["Only a working demo", "Identity, permissions, auditability, data boundaries, deployment topology, and support ownership", "A single prompt template", "Skipping legal review"], correctIndex: 1,
+    explanation: "FDEs need to handle enterprise constraints early so security, compliance, and operations do not block rollout late.",
+    source: "OpenAI Technical Deployment Lead postings; FDE deployment guides" },
+  { id: "fdeq-debug", disciplineId: "fde", topic: "Production Debugging",
+    question: "An AI agent works in staging but fails in production. What should you compare first?",
+    options: ["Only the frontend CSS", "Model/prompt versions, retrieved context, permissions, traffic mix, tool responses, and timeouts", "Only company revenue", "Only the user's browser"], correctIndex: 1,
+    explanation: "Production AI failures often come from environment, data, permission, traffic, or tool-call differences that were absent in staging.",
+    source: "fde.academy interview patterns; production AI debugging practice" },
+  { id: "fdeq-adoption", disciplineId: "fde", topic: "Adoption & Change Management",
+    question: "A technically successful deployment with low usage is primarily a signal to inspect…",
+    options: ["Whether users were forced to log in", "Workflow fit, value moments, training, champions, and operational incentives", "The company logo", "Only the cloud provider"], correctIndex: 1,
+    explanation: "FDE success is measured by production adoption and workflow impact, not just code stability.",
+    source: "OpenAI Technical Deployment Lead postings; enterprise adoption practice" },
+  { id: "fdeq-stakeholder", disciplineId: "fde", topic: "Stakeholder Communication",
+    question: "If a customer engineer refuses access, the strongest FDE response starts by treating it as…",
+    options: ["A trust and risk problem to understand", "A reason to bypass them", "A sales objection only", "A request to abandon security"], correctIndex: 0,
+    explanation: "Strong FDEs earn trust by understanding objections, minimizing access, co-owning guardrails, and making the customer engineer successful.",
+    source: "Awesome-FDE-Roadmap stakeholder examples; client simulation interview practice" },
+  { id: "fdeq-field-product", disciplineId: "fde", topic: "Field-to-Product Feedback",
+    question: "When should customer-specific deployment learning become product roadmap signal?",
+    options: ["When it recurs across accounts or reveals a platform gap", "Never", "Only when the customer asks loudly", "Only after a sales renewal"], correctIndex: 0,
+    explanation: "The FDE creates leverage by converting repeated field pain into reusable capabilities, tools, playbooks, or product improvements.",
+    source: "OpenAI FDE postings; Palantir Dev versus Delta model" },
+];
+
 export interface QuizFilter { disciplineId?: string; topic?: string; }
 
 // Full MCQ corpus = general/discipline bank + the AI/ML knowledge base.
@@ -394,7 +447,7 @@ import { AIML_BANK } from "./aiml";
 import { QUESTION_BANK } from "./questionBank";
 
 const INTERVIEW_BANK_MCQ: MCQ[] = QUESTION_BANK
-  .filter((q) => q.disciplineId === "product" || q.disciplineId === "aiml" || q.disciplineId === "system-design")
+  .filter((q) => q.disciplineId === "product" || q.disciplineId === "aiml" || q.disciplineId === "system-design" || q.disciplineId === "fde")
   .map((q) => ({
     id: `learn-${q.id}`,
     disciplineId: q.disciplineId,
@@ -411,7 +464,7 @@ const INTERVIEW_BANK_MCQ: MCQ[] = QUESTION_BANK
     source: q.source,
   }));
 
-const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...SYSTEM_DESIGN_CONCEPT_MCQ, ...AI_PM_CONCEPT_MCQ, ...AIML_BANK, ...INTERVIEW_BANK_MCQ];
+const ALL_MCQ: MCQ[] = [...QUIZ_BANK, ...SYSTEM_DESIGN_CONCEPT_MCQ, ...AI_PM_CONCEPT_MCQ, ...FDE_CONCEPT_MCQ, ...AIML_BANK, ...INTERVIEW_BANK_MCQ];
 
 export function quizQuestions(f: QuizFilter, count = 6): MCQ[] {
   // AI/ML is a self-contained knowledge base — don't fold in "general".

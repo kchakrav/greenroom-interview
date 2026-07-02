@@ -1,18 +1,24 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check, Users, Activity, Clock, LogIn } from "lucide-react";
+import { Database, Download, ChevronDown, ChevronRight, BookOpen, FileText, BrainCircuit, Check, Users, Activity, Clock, LogIn, Star } from "lucide-react";
 import Image from "next/image";
 import Nav from "@/components/Nav";
+import FavoriteButton from "@/components/FavoriteButton";
 import { QUESTION_BANK, queryBank, bankFacets, type BankQuestion, type QType } from "@/lib/questionBank";
 import { queryMCQ, mcqFacets, type MCQ } from "@/lib/quiz";
 import { SENIORITIES, lookup } from "@/lib/taxonomy";
 import { loadHistory } from "@/lib/history";
 import { getClientSession } from "@/lib/clientSession";
 import type { AttemptSummary } from "@/lib/types";
-import type { AnalyticsSnapshot } from "@/lib/analytics";
+import type { AnalyticsSnapshot, FavoriteAggregate, FavoriteKind } from "@/lib/analytics";
 
-type Tab = "questions" | "concepts" | "attempts" | "users";
+type Tab = "questions" | "concepts" | "favorites" | "attempts" | "users";
+type FavoriteFilter = "all" | "favorited" | "most";
+type AdminFavoriteItem =
+  | { kind: "question"; id: string; title: string; detail: string; disciplineId: string; topic: string; count: number; source: string; userIds?: string[]; url?: string }
+  | { kind: "concept"; id: string; title: string; detail: string; disciplineId: string; topic: string; count: number; source: string; userIds?: string[]; url?: string }
+  | { kind: "reference"; id: string; title: string; detail: string; disciplineId: string; topic: string; count: number; source: string; userIds?: string[]; url?: string };
 const PAGE_SIZE = 25;
 
 export default function AdminPage() {
@@ -25,14 +31,18 @@ export default function AdminPage() {
   const [type, setType] = useState("all");
   const [source, setSource] = useState("all");
   const [mTopic, setMTopic] = useState("all");
+  const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>("all");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [questionPage, setQuestionPage] = useState(1);
   const [conceptPage, setConceptPage] = useState(1);
+  const [favoritePage, setFavoritePage] = useState(1);
   const [attemptPage, setAttemptPage] = useState(1);
   const [userPage, setUserPage] = useState(1);
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [favoriteAggregates, setFavoriteAggregates] = useState<FavoriteAggregate[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   useEffect(() => setAttempts(loadHistory()), []);
 
@@ -42,42 +52,96 @@ export default function AdminPage() {
     fetch("/api/admin/analytics").then((r) => r.json()).then(setAnalytics).finally(() => setAnalyticsLoading(false));
   }, [tab, analytics]);
 
-  const results = useMemo(
+  useEffect(() => {
+    fetch("/api/admin/favorites")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setFavoriteAggregates(data?.favorites ?? []))
+      .catch(() => {});
+    fetch("/api/favorites")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.favorites) setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+  }, []);
+
+  const favoriteCountMap = useMemo(
+    () => new Map(favoriteAggregates.map((favorite) => [`${favorite.kind}:${favorite.questionId}`, favorite.count])),
+    [favoriteAggregates]
+  );
+  const favoriteCount = (kind: FavoriteKind, questionId: string) => favoriteCountMap.get(`${kind}:${questionId}`) ?? 0;
+  const adminFavoriteItems = useMemo<AdminFavoriteItem[]>(() => {
+    const questionsById = new Map(QUESTION_BANK.map((item) => [item.id, item]));
+    const conceptsById = new Map(queryMCQ().map((item) => [item.id, item]));
+    const items: AdminFavoriteItem[] = [];
+    for (const favorite of favoriteAggregates) {
+      if (favorite.kind === "question") {
+        const item = questionsById.get(favorite.questionId);
+        if (item) items.push({ kind: "question", id: item.id, title: item.prompt, detail: item.guidance, disciplineId: item.disciplineId, topic: item.competency, count: favorite.count, source: item.source, userIds: favorite.userIds });
+        else if (favorite.snapshot?.title) items.push(snapshotFavoriteItem(favorite));
+      } else if (favorite.kind === "concept") {
+        const item = conceptsById.get(favorite.questionId);
+        if (item) items.push({ kind: "concept", id: item.id, title: item.question, detail: item.explanation, disciplineId: item.disciplineId, topic: item.topic, count: favorite.count, source: item.source, userIds: favorite.userIds });
+        else if (favorite.snapshot?.title) items.push(snapshotFavoriteItem(favorite));
+      } else if (favorite.snapshot?.title) {
+        items.push(snapshotFavoriteItem(favorite));
+      }
+    }
+    return items.sort((a, b) => b.count - a.count);
+  }, [favoriteAggregates]);
+
+  const baseResults = useMemo(
     () => queryBank({ q, disciplineId: discipline, level, type: type as QType, source }),
     [q, discipline, level, type, source]
   );
-  const mcqResults = useMemo(
+  const baseMcqResults = useMemo(
     () => queryMCQ({ q, disciplineId: discipline, topic: mTopic, source }),
     [q, discipline, mTopic, source]
   );
+  const results = useMemo(
+    () => applyFavoriteFilter(baseResults, "question", favoriteFilter, favoriteCountMap),
+    [baseResults, favoriteFilter, favoriteCountMap]
+  );
+  const mcqResults = useMemo(
+    () => applyFavoriteFilter(baseMcqResults, "concept", favoriteFilter, favoriteCountMap),
+    [baseMcqResults, favoriteFilter, favoriteCountMap]
+  );
   const questionPageItems = useMemo(() => pageItems(results, questionPage, PAGE_SIZE), [results, questionPage]);
   const conceptPageItems = useMemo(() => pageItems(mcqResults, conceptPage, PAGE_SIZE), [mcqResults, conceptPage]);
+  const favoritePageItems = useMemo(() => pageItems(adminFavoriteItems, favoritePage, PAGE_SIZE), [adminFavoriteItems, favoritePage]);
   const reversedAttempts = useMemo(() => [...attempts].reverse(), [attempts]);
   const attemptPageItems = useMemo(() => pageItems(reversedAttempts, attemptPage, PAGE_SIZE), [reversedAttempts, attemptPage]);
   const userPageItems = useMemo(() => pageItems(analytics?.users ?? [], userPage, PAGE_SIZE), [analytics?.users, userPage]);
 
-  useEffect(() => setQuestionPage(1), [q, discipline, level, type, source]);
-  useEffect(() => setConceptPage(1), [q, discipline, mTopic, source]);
+  useEffect(() => setQuestionPage(1), [q, discipline, level, type, source, favoriteFilter]);
+  useEffect(() => setConceptPage(1), [q, discipline, mTopic, source, favoriteFilter]);
+  useEffect(() => setFavoritePage(1), [adminFavoriteItems]);
   useEffect(() => setAttemptPage(1), [attempts]);
   useEffect(() => setUserPage(1), [analytics?.users]);
 
   function exportJSON() {
     const data = tab === "questions"
-      ? { questionBank: results }
+      ? { questionBank: results.map((item) => ({ ...item, favoriteCount: favoriteCount("question", item.id) })) }
       : tab === "concepts"
-      ? { conceptMCQs: mcqResults }
+      ? { conceptMCQs: mcqResults.map((item) => ({ ...item, favoriteCount: favoriteCount("concept", item.id) })) }
+      : tab === "favorites"
+      ? { favorites: adminFavoriteItems }
       : { attempts: attempts.map((a) => ({ ...a, session: getClientSession(a.id) })) };
     download(JSON.stringify(data, null, 2), `greenroom-${tab}.json`, "application/json");
   }
   function exportCSV() {
     if (tab === "questions") {
-      const rows = [["id", "discipline", "competency", "levels", "type", "difficulty", "source", "prompt", "guidance"]];
-      results.forEach((b) => rows.push([b.id, b.disciplineId, b.competency, b.levels.join("|"), b.type, String(b.difficulty), b.source, b.prompt, b.guidance]));
+      const rows = [["id", "discipline", "competency", "levels", "type", "difficulty", "favorite_count", "source", "prompt", "guidance"]];
+      results.forEach((b) => rows.push([b.id, b.disciplineId, b.competency, b.levels.join("|"), b.type, String(b.difficulty), String(favoriteCount("question", b.id)), b.source, b.prompt, b.guidance]));
       download(toCSV(rows), "greenroom-questions.csv", "text/csv");
     } else if (tab === "concepts") {
-      const rows = [["id", "discipline", "topic", "source", "question", "options", "correct", "explanation"]];
-      mcqResults.forEach((m) => rows.push([m.id, m.disciplineId, m.topic, m.source, m.question, m.options.join("|"), m.options[m.correctIndex], m.explanation]));
+      const rows = [["id", "discipline", "topic", "favorite_count", "source", "question", "options", "correct", "explanation"]];
+      mcqResults.forEach((m) => rows.push([m.id, m.disciplineId, m.topic, String(favoriteCount("concept", m.id)), m.source, m.question, m.options.join("|"), m.options[m.correctIndex], m.explanation]));
       download(toCSV(rows), "greenroom-concepts.csv", "text/csv");
+    } else if (tab === "favorites") {
+      const rows = [["kind", "id", "discipline", "topic", "favorite_count", "user_ids", "source", "question", "detail"]];
+      adminFavoriteItems.forEach((item) => rows.push([item.kind, item.id, item.disciplineId, item.topic, String(item.count), (item.userIds ?? []).join("|"), item.source, item.title, item.detail]));
+      download(toCSV(rows), "greenroom-favorites.csv", "text/csv");
     } else {
       const rows = [["id", "at", "role", "seniority", "overall", "competencies"]];
       attempts.forEach((a) => rows.push([a.id, new Date(a.at).toISOString(), a.roleLabel, a.seniorityId, String(a.overall), a.competencies.map((c) => `${c.competency}:${c.score}`).join("|")]));
@@ -86,7 +150,7 @@ export default function AdminPage() {
   }
   async function exportExcelByTopic() {
     if (tab !== "questions" && tab !== "concepts") return;
-    const groups = groupedExportRows(tab, results, mcqResults);
+    const groups = groupedExportRows(tab, results, mcqResults, favoriteCountMap);
     if (groups.length === 0) {
       download(excelWorkbook([{ name: "No results", rows: [["No results for the current filters"]], widths: [40], pdfColumnStyles: {} }]), `greenroom-${tab}-by-topic.xls`, "application/vnd.ms-excel");
       return;
@@ -101,7 +165,7 @@ export default function AdminPage() {
     ]);
     const autoTable = (autoTableModule as any).default ?? autoTableModule;
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-    const groups = groupedExportRows(tab, results, mcqResults);
+    const groups = groupedExportRows(tab, results, mcqResults, favoriteCountMap);
     doc.setFontSize(14);
     doc.text(`GreenRoom ${tab === "questions" ? "Interview Questions" : "Concept MCQs"} by Topic`, 40, 36);
     if (groups.length === 0) {
@@ -127,8 +191,25 @@ export default function AdminPage() {
     doc.save(`greenroom-${tab}-by-topic.pdf`);
   }
 
+  function setFavorite(kind: FavoriteKind, questionId: string, active: boolean) {
+    const key = `${kind}:${questionId}`;
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    setFavoriteAggregates((current) => {
+      const existing = current.find((item) => item.kind === kind && item.questionId === questionId);
+      const nextCount = Math.max(0, (existing?.count ?? 0) + (active ? 1 : -1));
+      if (!existing && nextCount > 0) return [...current, { kind, questionId, count: nextCount }];
+      if (existing && nextCount === 0) return current.filter((item) => !(item.kind === kind && item.questionId === questionId));
+      return current.map((item) => item.kind === kind && item.questionId === questionId ? { ...item, count: nextCount } : item);
+    });
+  }
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 py-10">
       <Nav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -155,6 +236,7 @@ export default function AdminPage() {
       <div className="mt-6 flex flex-wrap gap-2">
         <Tab2 active={tab === "questions"} onClick={() => setTab("questions")} icon={BookOpen} label={`Interview questions (${QUESTION_BANK.length})`} />
         <Tab2 active={tab === "concepts"} onClick={() => setTab("concepts")} icon={BrainCircuit} label={`Concept MCQs (${mcqF.total})`} />
+        <Tab2 active={tab === "favorites"} onClick={() => setTab("favorites")} icon={Star} label={`Favorites (${adminFavoriteItems.length})`} />
         <Tab2 active={tab === "attempts"} onClick={() => setTab("attempts")} icon={FileText} label={`Attempts (${attempts.length})`} />
         <Tab2 active={tab === "users"} onClick={() => setTab("users")} icon={Users} label="Users & Activity" />
       </div>
@@ -162,12 +244,13 @@ export default function AdminPage() {
       {tab === "questions" ? (
         <>
           {/* query controls */}
-          <div className="mt-4 grid gap-2 md:grid-cols-5">
+          <div className="mt-4 grid gap-2 md:grid-cols-6">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="glass-strong rounded-xl px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none md:col-span-1" />
             <Select value={discipline} onChange={setDiscipline} options={["all", ...facets.disciplines]} />
             <Select value={level} onChange={setLevel} options={["all", ...SENIORITIES.map((s) => s.id)]} labels={Object.fromEntries(SENIORITIES.map((s) => [s.id, s.label]))} />
             <Select value={type} onChange={setType} options={["all", ...facets.types]} />
             <Select value={source} onChange={setSource} options={["all", ...facets.sources]} truncate />
+            <Select value={favoriteFilter} onChange={(value) => setFavoriteFilter(value as FavoriteFilter)} options={["all", "favorited", "most"]} labels={{ all: "All favorites", favorited: "Favorited only", most: "Most favorited" }} />
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -178,9 +261,11 @@ export default function AdminPage() {
           <div className="mt-2 space-y-2">
             {questionPageItems.map((b) => (
               <div key={b.id} className="glass rounded-2xl">
-                <button onClick={() => setOpen((o) => ({ ...o, [b.id]: !o[b.id] }))} className="flex w-full items-start gap-3 p-4 text-left">
-                  {open[b.id] ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted" />}
-                  <div className="flex-1">
+                <div className="flex w-full items-start gap-3 p-4 text-left">
+                  <button onClick={() => setOpen((o) => ({ ...o, [b.id]: !o[b.id] }))} className="mt-1 shrink-0 text-ink-muted">
+                    {open[b.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => setOpen((o) => ({ ...o, [b.id]: !o[b.id] }))} className="flex-1 text-left">
                     <div className="text-ink-primary">{b.prompt}</div>
                     <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
                       <Tag>{b.disciplineId}</Tag>
@@ -188,9 +273,18 @@ export default function AdminPage() {
                       <Tag>{b.type}</Tag>
                       <Tag>diff {b.difficulty}/5</Tag>
                       <Tag>{b.levels.length} levels</Tag>
+                      <Tag accent>{favoriteCount("question", b.id)} favorites</Tag>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  <FavoriteButton
+                    kind="question"
+                    questionId={b.id}
+                    initialActive={favoriteIds.has(`question:${b.id}`)}
+                    count={favoriteCount("question", b.id)}
+                    snapshot={{ title: b.prompt, detail: b.guidance, disciplineId: b.disciplineId, topic: b.competency, source: b.source }}
+                    onChange={(active) => setFavorite("question", b.id, active)}
+                  />
+                </div>
                 {open[b.id] && (
                   <div className="border-t border-hair px-4 pb-4 pl-11 pt-3 text-sm">
                     <p className="text-ink-secondary"><b className="text-ink-primary">Model-answer guidance:</b> {b.guidance}</p>
@@ -206,11 +300,12 @@ export default function AdminPage() {
       ) : tab === "concepts" ? (
         <>
           {/* concept-MCQ query controls */}
-          <div className="mt-4 grid gap-2 md:grid-cols-4">
+          <div className="mt-4 grid gap-2 md:grid-cols-5">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="glass-strong rounded-xl px-3 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none" />
             <Select value={discipline} onChange={setDiscipline} options={["all", ...mcqF.disciplines]} />
             <Select value={mTopic} onChange={setMTopic} options={["all", ...mcqF.topics]} truncate />
             <Select value={source} onChange={setSource} options={["all", ...mcqF.sources]} truncate />
+            <Select value={favoriteFilter} onChange={(value) => setFavoriteFilter(value as FavoriteFilter)} options={["all", "favorited", "most"]} labels={{ all: "All favorites", favorited: "Favorited only", most: "Most favorited" }} />
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-ink-muted">{mcqResults.length} result{mcqResults.length === 1 ? "" : "s"}</p>
@@ -219,16 +314,27 @@ export default function AdminPage() {
           <div className="mt-2 space-y-2">
             {conceptPageItems.map((m) => (
               <div key={m.id} className="glass rounded-2xl">
-                <button onClick={() => setOpen((o) => ({ ...o, [m.id]: !o[m.id] }))} className="flex w-full items-start gap-3 p-4 text-left">
-                  {open[m.id] ? <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-ink-muted" /> : <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted" />}
-                  <div className="flex-1">
+                <div className="flex w-full items-start gap-3 p-4 text-left">
+                  <button onClick={() => setOpen((o) => ({ ...o, [m.id]: !o[m.id] }))} className="mt-1 shrink-0 text-ink-muted">
+                    {open[m.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => setOpen((o) => ({ ...o, [m.id]: !o[m.id] }))} className="flex-1 text-left">
                     <div className="text-ink-primary">{m.question}</div>
                     <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
                       <Tag>{m.disciplineId === "aiml" ? "AI / ML" : m.disciplineId}</Tag>
                       <Tag accent>{m.topic}</Tag>
+                      <Tag accent>{favoriteCount("concept", m.id)} favorites</Tag>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  <FavoriteButton
+                    kind="concept"
+                    questionId={m.id}
+                    initialActive={favoriteIds.has(`concept:${m.id}`)}
+                    count={favoriteCount("concept", m.id)}
+                    snapshot={{ title: m.question, detail: m.explanation, disciplineId: m.disciplineId, topic: m.topic, source: m.source }}
+                    onChange={(active) => setFavorite("concept", m.id, active)}
+                  />
+                </div>
                 {open[m.id] && (
                   <div className="border-t border-hair px-4 pb-4 pl-11 pt-3 text-sm">
                     <div className="space-y-1">
@@ -247,6 +353,51 @@ export default function AdminPage() {
           </div>
           <Pagination className="mt-4 justify-end" page={conceptPage} total={mcqResults.length} pageSize={PAGE_SIZE} onPage={setConceptPage} />
         </>
+      ) : tab === "favorites" ? (
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-ink-muted">{adminFavoriteItems.length} distinct favorited item{adminFavoriteItems.length === 1 ? "" : "s"} across all users</p>
+            <Pagination page={favoritePage} total={adminFavoriteItems.length} pageSize={PAGE_SIZE} onPage={setFavoritePage} />
+          </div>
+          <div className="mt-3 space-y-2">
+            {favoritePageItems.length === 0 && (
+              <div className="glass rounded-2xl p-8 text-center text-sm text-ink-muted">No favorites have been marked yet.</div>
+            )}
+            {favoritePageItems.map((item) => (
+              <div key={`${item.kind}:${item.id}`} className="glass rounded-2xl p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="mb-2 flex flex-wrap gap-1.5 text-xs">
+                      <Tag>{item.kind === "question" ? "Interview" : item.kind === "concept" ? "Concept" : "Reference"}</Tag>
+                      <Tag>{item.disciplineId}</Tag>
+                      <Tag accent>{item.topic}</Tag>
+                      <Tag accent>{item.count} favorites</Tag>
+                      <Tag>{item.userIds?.length ?? item.count} users</Tag>
+                    </div>
+                    <div className="text-sm font-semibold text-ink-primary">{item.title}</div>
+                  </div>
+                  <FavoriteButton
+                    kind={item.kind}
+                    questionId={item.id}
+                    initialActive={favoriteIds.has(`${item.kind}:${item.id}`)}
+                    count={item.count}
+                    snapshot={{ title: item.title, detail: item.detail, disciplineId: item.disciplineId, topic: item.topic, source: item.source, url: item.url }}
+                    onChange={(active) => setFavorite(item.kind, item.id, active)}
+                  />
+                </div>
+                <p className="mt-3 text-sm text-ink-secondary">{item.detail}</p>
+                {item.userIds && item.userIds.length > 0 && (
+                  <p className="mt-2 text-xs text-ink-muted">Favorited by: {item.userIds.join(", ")}</p>
+                )}
+                {item.url && (
+                  <a href={item.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-medium text-accent hover:underline">Open source</a>
+                )}
+                <p className="mt-2 text-xs text-ink-muted">Source: {item.source}</p>
+              </div>
+            ))}
+          </div>
+          <Pagination className="mt-4 justify-end" page={favoritePage} total={adminFavoriteItems.length} pageSize={PAGE_SIZE} onPage={setFavoritePage} />
+        </div>
       ) : tab === "users" ? (
         <div className="mt-6">
           {analyticsLoading && <p className="text-ink-muted">Loading analytics…</p>}
@@ -378,15 +529,15 @@ type ExportGroup = {
   widths: number[];
   pdfColumnStyles: Record<number, { cellWidth: number }>;
 };
-function groupedExportRows(tab: "questions" | "concepts", questions: BankQuestion[], concepts: MCQ[]): ExportGroup[] {
+function groupedExportRows(tab: "questions" | "concepts", questions: BankQuestion[], concepts: MCQ[], favoriteCounts: Map<string, number>): ExportGroup[] {
   if (tab === "questions") {
     return groupBy(questions, (q) => q.competency).map(([name, items]) => ({
       name,
       rows: [
-        ["id", "discipline", "topic", "levels", "type", "difficulty", "source", "prompt", "guidance"],
-        ...items.map((q) => [q.id, q.disciplineId, q.competency, q.levels.join(", "), q.type, String(q.difficulty), q.source, q.prompt, q.guidance]),
+        ["id", "discipline", "topic", "levels", "type", "difficulty", "favorite_count", "source", "prompt", "guidance"],
+        ...items.map((q) => [q.id, q.disciplineId, q.competency, q.levels.join(", "), q.type, String(q.difficulty), String(favoriteCounts.get(`question:${q.id}`) ?? 0), q.source, q.prompt, q.guidance]),
       ],
-      widths: [24, 16, 28, 24, 14, 10, 28, 80, 90],
+      widths: [24, 16, 28, 24, 14, 10, 14, 28, 80, 90],
       pdfColumnStyles: {
         0: { cellWidth: 58 },
         1: { cellWidth: 55 },
@@ -394,30 +545,55 @@ function groupedExportRows(tab: "questions" | "concepts", questions: BankQuestio
         3: { cellWidth: 70 },
         4: { cellWidth: 45 },
         5: { cellWidth: 36 },
-        6: { cellWidth: 85 },
-        7: { cellWidth: 170 },
-        8: { cellWidth: 180 },
+        6: { cellWidth: 45 },
+        7: { cellWidth: 80 },
+        8: { cellWidth: 155 },
+        9: { cellWidth: 165 },
       },
     }));
   }
   return groupBy(concepts, (m) => m.topic).map(([name, items]) => ({
     name,
     rows: [
-      ["id", "discipline", "topic", "source", "question", "options", "correct", "explanation"],
-      ...items.map((m) => [m.id, m.disciplineId, m.topic, m.source, m.question, m.options.join(" | "), m.options[m.correctIndex], m.explanation]),
+      ["id", "discipline", "topic", "favorite_count", "source", "question", "options", "correct", "explanation"],
+      ...items.map((m) => [m.id, m.disciplineId, m.topic, String(favoriteCounts.get(`concept:${m.id}`) ?? 0), m.source, m.question, m.options.join(" | "), m.options[m.correctIndex], m.explanation]),
     ],
-    widths: [28, 16, 28, 28, 80, 80, 40, 90],
+    widths: [28, 16, 28, 14, 28, 80, 80, 40, 90],
     pdfColumnStyles: {
       0: { cellWidth: 58 },
       1: { cellWidth: 55 },
       2: { cellWidth: 80 },
-      3: { cellWidth: 85 },
-      4: { cellWidth: 170 },
-      5: { cellWidth: 145 },
-      6: { cellWidth: 80 },
-      7: { cellWidth: 110 },
+      3: { cellWidth: 45 },
+      4: { cellWidth: 80 },
+      5: { cellWidth: 160 },
+      6: { cellWidth: 130 },
+      7: { cellWidth: 75 },
+      8: { cellWidth: 105 },
     },
   }));
+}
+function applyFavoriteFilter<T extends { id: string }>(items: T[], kind: FavoriteKind, filter: FavoriteFilter, counts: Map<string, number>): T[] {
+  if (filter === "all") return items;
+  const withCounts = items
+    .map((item) => ({ item, count: counts.get(`${kind}:${item.id}`) ?? 0 }))
+    .filter(({ count }) => count > 0);
+  if (filter === "most") withCounts.sort((a, b) => b.count - a.count);
+  return withCounts.map(({ item }) => item);
+}
+function snapshotFavoriteItem(favorite: FavoriteAggregate): AdminFavoriteItem {
+  const snapshot = favorite.snapshot ?? {};
+  return {
+    kind: favorite.kind,
+    id: favorite.questionId,
+    title: snapshot.title ?? favorite.questionId,
+    detail: snapshot.detail ?? "Saved favorite",
+    disciplineId: snapshot.disciplineId ?? "general",
+    topic: snapshot.topic ?? "Saved",
+    count: favorite.count,
+    source: snapshot.source ?? "Saved snapshot",
+    userIds: favorite.userIds,
+    url: snapshot.url,
+  } as AdminFavoriteItem;
 }
 function excelWorkbook(groups: ExportGroup[]) {
   const usedSheetNames = new Set<string>();

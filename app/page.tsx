@@ -40,7 +40,7 @@ export default function Onboarding() {
     set({ modalities: config.modalities.includes(m) ? config.modalities.filter((x) => x !== m) : [...config.modalities, m] });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 py-10">
       <Nav />
 
       {/* Choose how to practice — non-rigid: pick what fits today */}

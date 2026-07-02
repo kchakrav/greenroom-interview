@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import AvatarOrb from "@/components/AvatarOrb";
 import CodeStage, { STARTER_CODE, type CodeState } from "@/components/CodeStage";
+import FavoriteButton from "@/components/FavoriteButton";
 import { useStage } from "@/lib/useStage";
 import { useSpeech } from "@/lib/useSpeech";
 import { encouragement } from "@/components/coach";
@@ -43,6 +44,7 @@ export default function InterviewRoom() {
   const [help, setHelp] = useState<Record<HelpKind, string>>({ hint: "", outline: "" });
   const [helpOpen, setHelpOpen] = useState<HelpKind | null>(null);
   const [helpLoading, setHelpLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const started = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +61,18 @@ export default function InterviewRoom() {
     const id = setInterval(() => setLevel(0.3 + Math.random() * 0.6), 120);
     return () => clearInterval(id);
   }, [speech.speaking, speech.listening]);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -204,6 +218,22 @@ export default function InterviewRoom() {
     });
   }
 
+  function favoriteQuestionId(text: string) {
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) hash = Math.imul(31, hash) + text.charCodeAt(i) | 0;
+    return `generated-${Math.abs(hash)}`;
+  }
+
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `question:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
+
   async function finishAndScore(finalTranscript?: ChatTurn[]) {
     if (!sessionId) return;
     const tx = finalTranscript ?? turns;
@@ -234,6 +264,7 @@ export default function InterviewRoom() {
   const orbState =
     phase === "thinking" || phase === "scoring" ? "thinking" : speech.speaking || phase === "interviewer" ? "speaking" : speech.listening ? "listening" : "idle";
   const lastInterviewer = [...turns].reverse().find((t) => t.role === "interviewer");
+  const currentQuestionId = lastInterviewer?.text ? favoriteQuestionId(lastInterviewer.text) : null;
 
   // ---------- Ready Room ----------
   if (inReady) {
@@ -401,14 +432,25 @@ export default function InterviewRoom() {
         <motion.div
           key={(live || lastInterviewer?.text || "").slice(0, 24)}
           initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          className="mt-5 max-w-2xl text-center text-xl leading-relaxed text-ink-primary"
+          className="mt-5 max-w-4xl text-center text-xl leading-relaxed text-ink-primary"
         >
           {live || lastInterviewer?.text}
         </motion.div>
+        {lastInterviewer?.text && currentQuestionId && (
+          <div className="mt-3">
+            <FavoriteButton
+              kind="question"
+              questionId={currentQuestionId}
+              initialActive={favoriteIds.has(`question:${currentQuestionId}`)}
+              snapshot={{ title: lastInterviewer.text, detail: "Generated live interview question", disciplineId: config.disciplineId, topic: config.drill?.competency ?? role.label, source: "Live interview" }}
+              onChange={(active) => setFavorite(currentQuestionId, active)}
+            />
+          </div>
+        )}
 
         {/* practice coaching help: hint + model outline */}
         {isPractice && phase === "awaiting" && (
-          <div className="mt-5 w-full max-w-2xl">
+          <div className="mt-5 w-full max-w-4xl">
             {!helpOpen ? (
               <div className="flex justify-center gap-2">
                 <button onClick={() => fetchHelp("hint")} className="flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-ink-secondary transition hover:text-ink-primary">
@@ -453,7 +495,7 @@ export default function InterviewRoom() {
       </div>
 
       {/* captions transcript */}
-      <div ref={scrollRef} className="mx-auto max-h-[22vh] w-full max-w-2xl overflow-y-auto px-6">
+      <div ref={scrollRef} className="mx-auto max-h-[22vh] w-full max-w-4xl overflow-y-auto px-6">
         <AnimatePresence initial={false}>
           {turns.map((t, i) => (
             <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-2 text-sm">
@@ -467,7 +509,7 @@ export default function InterviewRoom() {
         </AnimatePresence>
       </div>
 
-      {error && <div className="mx-auto mb-2 max-w-2xl rounded-lg bg-signal-bad/15 px-4 py-2 text-sm text-signal-bad">{error}</div>}
+      {error && <div className="mx-auto mb-2 max-w-4xl rounded-lg bg-signal-bad/15 px-4 py-2 text-sm text-signal-bad">{error}</div>}
 
       {/* low-pressure practice controls */}
       {isPractice && phase === "awaiting" && (

@@ -3,17 +3,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Library, Search, ChevronDown, ExternalLink, Flame, Clock, Link2, Minus,
+  Library, Search, ChevronDown, ExternalLink, Flame, Clock, Link2, Minus, BriefcaseBusiness,
   BookOpen, Brain, Rocket, FileText, Hash, ArrowRight, Sparkles,
 } from "lucide-react";
 import Nav from "@/components/Nav";
+import FavoriteButton from "@/components/FavoriteButton";
 import {
   REF_FAQ, REF_ML, REF_EMERGING, REF_ACRONYMS, REF_PAPERS, REF_UPDATED, isRecent,
   type RefEntry,
 } from "@/lib/reference";
 import { QUESTION_BANK, type BankQuestion } from "@/lib/questionBank";
 
-type TabId = "faq" | "ml" | "pmq" | "aiq" | "sdq" | "em" | "papers" | "acr";
+type TabId = "faq" | "ml" | "pmq" | "aiq" | "sdq" | "fdeq" | "em" | "papers" | "acr";
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<any> }[] = [
   { id: "faq", label: "AI Concepts", icon: BookOpen },
@@ -21,6 +22,7 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<any> }[] = [
   { id: "pmq", label: "PM Questions", icon: Library },
   { id: "aiq", label: "AI Questions", icon: Sparkles },
   { id: "sdq", label: "System Design", icon: Link2 },
+  { id: "fdeq", label: "FDE Questions", icon: BriefcaseBusiness },
   { id: "em", label: "Emerging", icon: Rocket },
   { id: "papers", label: "Papers", icon: FileText },
   { id: "acr", label: "Acronyms", icon: Hash },
@@ -37,10 +39,11 @@ export default function ReferencePage() {
   const pmQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "product"), []);
   const aiQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "aiml"), []);
   const sdQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "system-design"), []);
-  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length + sdQuestions.length;
+  const fdeQuestions = useMemo(() => QUESTION_BANK.filter((q) => q.disciplineId === "fde"), []);
+  const total = REF_FAQ.length + REF_ML.length + REF_EMERGING.length + REF_PAPERS.length + REF_ACRONYMS.length + pmQuestions.length + aiQuestions.length + sdQuestions.length + fdeQuestions.length;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-6 py-10">
       <Nav />
 
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -79,6 +82,7 @@ export default function ReferencePage() {
         {tab === "pmq" && <QuestionList items={pmQuestions} placeholder="Search product management interview questions…" />}
         {tab === "aiq" && <QuestionList items={aiQuestions} placeholder="Search AI interview questions…" />}
         {tab === "sdq" && <QuestionList items={sdQuestions} placeholder="Search system design interview questions…" />}
+        {tab === "fdeq" && <QuestionList items={fdeQuestions} placeholder="Search FDE interview questions…" />}
         {tab === "em" && <EntryList items={REF_EMERGING} placeholder="Search emerging concepts…" showHorizon note="Frontier concepts gaining prominence in 2025–2026." />}
         {tab === "papers" && <Papers />}
         {tab === "acr" && <Acronyms />}
@@ -134,6 +138,7 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
   const [cat, setCat] = useState("all");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const allCats = useMemo(() => cats(items), [items]);
 
   const shown = items.filter((it) => {
@@ -144,6 +149,27 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
   });
   const pageShown = pageItems(shown, page, PAGE_SIZE);
   useEffect(() => setPage(1), [q, cat, items]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `reference:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
 
   return (
     <div>
@@ -176,17 +202,14 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
         <div className="text-xs text-ink-muted">{shown.length} result{shown.length === 1 ? "" : "s"}</div>
         <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
       </div>
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No results found.</div>}
         {pageShown.map((it) => {
           const isOpen = open === it.id;
           return (
             <div key={it.id} className="glass overflow-hidden rounded-2xl">
-              <button
-                onClick={() => setOpen(isOpen ? null : it.id)}
-                className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]"
-              >
-                <div>
+              <div className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]">
+                <button onClick={() => setOpen(isOpen ? null : it.id)} className="flex-1 text-left">
                   <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
                     {it.tags.map((t) => (
                       <span key={t} className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] capitalize text-ink-muted">{t.replace(/-/g, " ")}</span>
@@ -196,9 +219,20 @@ function EntryList({ items, placeholder, showRelevance, showHorizon, note }: {
                     {isRecent(it.added) && <NewTag />}
                   </div>
                   <div className="text-sm font-medium text-ink-primary">{it.q}</div>
+                </button>
+                <div className="mt-0.5 flex shrink-0 items-center gap-2">
+                  <FavoriteButton
+                    kind="reference"
+                    questionId={it.id}
+                    initialActive={favoriteIds.has(`reference:${it.id}`)}
+                    snapshot={{ title: it.q, detail: [it.a, it.extra].filter(Boolean).join("\n\n"), disciplineId: "reference", topic: it.tags[0] ?? "Reference", source: it.cite?.[0]?.label, url: it.cite?.[0]?.url }}
+                    onChange={(active) => setFavorite(it.id, active)}
+                  />
+                  <button onClick={() => setOpen(isOpen ? null : it.id)} aria-label={isOpen ? "Collapse reference entry" : "Expand reference entry"}>
+                    <ChevronDown className={`h-4 w-4 text-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
                 </div>
-                <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
-              </button>
+              </div>
               <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div
@@ -237,6 +271,7 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
   const [cat, setCat] = useState("all");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const allCats = useMemo(() => ["all", ...Array.from(new Set(items.map((i) => i.competency))).sort()], [items]);
 
   const shown = items.filter((it) => {
@@ -247,6 +282,27 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
   });
   const pageShown = pageItems(shown, page, PAGE_SIZE);
   useEffect(() => setPage(1), [q, cat, items]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `question:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
 
   return (
     <div>
@@ -273,26 +329,36 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
         <div className="text-xs text-ink-muted">{shown.length} of {items.length} questions</div>
         <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
       </div>
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No results found.</div>}
         {pageShown.map((it) => {
           const isOpen = open === it.id;
           return (
             <div key={it.id} className="glass overflow-hidden rounded-2xl">
-              <button
-                onClick={() => setOpen(isOpen ? null : it.id)}
-                className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]"
-              >
-                <div>
-                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.competency}</span>
-                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.type}</span>
-                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">Difficulty {it.difficulty}</span>
+              <div className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]">
+                <button onClick={() => setOpen(isOpen ? null : it.id)} className="flex-1 text-left">
+                  <div>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.competency}</span>
+                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">{it.type}</span>
+                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-ink-muted">Difficulty {it.difficulty}</span>
+                    </div>
+                    <div className="text-sm font-medium text-ink-primary">{it.prompt}</div>
                   </div>
-                  <div className="text-sm font-medium text-ink-primary">{it.prompt}</div>
+                </button>
+                <div className="mt-0.5 flex shrink-0 items-center gap-2">
+                  <FavoriteButton
+                    kind="question"
+                    questionId={it.id}
+                    initialActive={favoriteIds.has(`question:${it.id}`)}
+                    snapshot={{ title: it.prompt, detail: it.guidance, disciplineId: it.disciplineId, topic: it.competency, source: it.source }}
+                    onChange={(active) => setFavorite(it.id, active)}
+                  />
+                  <button onClick={() => setOpen(isOpen ? null : it.id)} aria-label={isOpen ? "Collapse question" : "Expand question"}>
+                    <ChevronDown className={`h-4 w-4 text-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
                 </div>
-                <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-ink-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
-              </button>
+              </div>
               <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div
@@ -318,6 +384,7 @@ function QuestionList({ items, placeholder }: { items: BankQuestion[]; placehold
 function Papers() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const shown = REF_PAPERS.filter((p) => {
     const s = q.toLowerCase().trim();
     if (!s) return true;
@@ -325,6 +392,26 @@ function Papers() {
   });
   const pageShown = pageItems(shown, page, PAGE_SIZE);
   useEffect(() => setPage(1), [q]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `reference:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
   return (
     <div>
       <div className="relative">
@@ -337,12 +424,19 @@ function Papers() {
       <div className="mt-4 flex justify-end">
         <Pagination page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
       </div>
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
         {pageShown.map((p) => (
-          <a key={p.id} href={p.url} target="_blank" rel="noreferrer" className="glass group flex flex-col rounded-2xl p-4 transition hover:ring-2 hover:ring-accent">
+          <div key={p.id} className="glass group flex flex-col rounded-2xl p-4 transition hover:ring-2 hover:ring-accent">
             <div className="flex items-start justify-between gap-2">
               <FileText className="h-5 w-5 text-accent" />
               <div className="flex items-center gap-1.5">
+                <FavoriteButton
+                  kind="reference"
+                  questionId={p.id}
+                  initialActive={favoriteIds.has(`reference:${p.id}`)}
+                  snapshot={{ title: p.title, detail: p.desc, disciplineId: "reference", topic: "Papers", source: p.authors, url: p.url }}
+                  onChange={(active) => setFavorite(p.id, active)}
+                />
                 {isRecent(p.added) && <NewTag />}
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${p.impact === "foundational" ? "bg-signal-warn/15 text-signal-warn" : "bg-signal-ok/15 text-signal-ok"}`}>
                   {p.impact === "foundational" ? "Foundational" : "High impact"}
@@ -352,10 +446,10 @@ function Papers() {
             <div className="mt-2 text-sm font-semibold text-ink-primary">{p.title}</div>
             <div className="mt-0.5 text-[11px] text-ink-muted">{p.authors}</div>
             <p className="mt-2 text-xs leading-relaxed text-ink-secondary">{p.desc}</p>
-            <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent">
+            <a href={p.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent">
               <ExternalLink className="h-3 w-3" /> Read paper
-            </div>
-          </a>
+            </a>
+          </div>
         ))}
       </div>
       <Pagination className="mt-4 justify-end" page={page} total={shown.length} pageSize={PAGE_SIZE} onPage={setPage} />
@@ -366,6 +460,7 @@ function Papers() {
 function Acronyms() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const shown = REF_ACRONYMS.filter((a) => {
     const s = q.toLowerCase().trim();
     if (!s) return true;
@@ -373,6 +468,26 @@ function Acronyms() {
   });
   const pageShown = pageItems(shown, page, PAGE_SIZE);
   useEffect(() => setPage(1), [q]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/favorites")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.favorites) return;
+        setFavoriteIds(new Set(data.favorites.map((f: { kind: string; questionId: string }) => `${f.kind}:${f.questionId}`)));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+  function setFavorite(questionId: string, active: boolean) {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      const key = `reference:${questionId}`;
+      if (active) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
   return (
     <div>
       <div className="relative">
@@ -395,6 +510,13 @@ function Acronyms() {
               </div>
               <div className="mt-0.5 text-xs text-ink-secondary">{a.pm_note}</div>
             </div>
+            <FavoriteButton
+              kind="reference"
+              questionId={a.id}
+              initialActive={favoriteIds.has(`reference:${a.id}`)}
+              snapshot={{ title: `${a.code}: ${a.full}`, detail: a.pm_note, disciplineId: "reference", topic: "Acronyms", source: "GreenRoom glossary" }}
+              onChange={(active) => setFavorite(a.id, active)}
+            />
           </div>
         ))}
         {shown.length === 0 && <div className="py-10 text-center text-sm text-ink-muted">No matches.</div>}

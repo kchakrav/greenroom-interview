@@ -28,14 +28,14 @@ export default function PathsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <Nav />
       <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight md:text-4xl">
         <Map className="h-7 w-7" style={{ color: "var(--accent)" }} /> Learning <span className="accent-text">paths</span>.
       </h1>
       <p className="mt-2 max-w-xl text-ink-secondary">Guided curricula that take you from concepts to a full interview. Do them in order, or jump to any step — your choice.</p>
 
-      <div className="mt-8 space-y-5">
+      <div className="mt-8 grid gap-5 xl:grid-cols-2">
         {PATHS.map((p) => {
           const completed = done[p.id] ?? [];
           const pct = Math.round((completed.length / p.steps.length) * 100);

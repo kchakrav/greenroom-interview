@@ -52,6 +52,18 @@ export const DISCIPLINES: Discipline[] = [
     ],
   },
   {
+    id: "fde",
+    label: "Forward Deployed Engineering",
+    icon: "BriefcaseBusiness",
+    roles: [
+      { id: "fde-ai", label: "Forward Deployed AI Engineer", focusAreas: ["Customer Discovery & Scoping", "AI Deployment & Integration", "RAG & Agentic Workflows", "Evals, Guardrails & Observability"] },
+      { id: "fde-sw", label: "Forward Deployed Software Engineer", focusAreas: ["Deployment Decomposition", "Enterprise Data & Security", "Production Debugging", "Stakeholder Communication"] },
+      { id: "applied-ai", label: "Applied AI Engineer", focusAreas: ["RAG & Agentic Workflows", "Evals, Guardrails & Observability", "AI Deployment & Integration", "Field-to-Product Feedback"] },
+      { id: "ai-solutions", label: "AI Solutions Engineer", focusAreas: ["Customer Discovery & Scoping", "Stakeholder Communication", "Enterprise Data & Security", "Adoption & Change Management"] },
+      { id: "tdl", label: "Technical Deployment Lead", focusAreas: ["Deployment Decomposition", "Adoption & Change Management", "Field-to-Product Feedback", "Stakeholder Communication"] },
+    ],
+  },
+  {
     id: "system-design",
     label: "System Design",
     icon: "Network",
@@ -167,6 +179,7 @@ export function competenciesFor(disciplineId: string, roleId: string, seniorityI
   const isLeader = LEADER_LEVELS.includes(seniorityId);
   const base: Record<string, string[]> = {
     engineering: ["Problem Solving", "Technical Depth", "Code/Design Quality", "Communication", "Collaboration"],
+    fde: ["Customer Discovery & Scoping", "Deployment Decomposition", "AI Deployment & Integration", "Production Debugging", "Stakeholder Communication"],
     "system-design": ["Scalability & Capacity", "Data Modeling & Storage", "Reliability & Observability", "API Design", "Tradeoff Communication"],
     product: ["Product Sense", "Analytical Thinking", "Execution", "Strategic Thinking", "Stakeholder Influence"],
     data: ["Analytical Rigor", "Technical Skill", "Business Insight", "Communication", "Experiment Design"],

@@ -55,7 +55,7 @@ export default function Feedback({ params }: { params: { id: string } }) {
   if (!report) return <Center>No report yet for this session.</Center>;
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <Link href="/" className="text-sm text-ink-muted hover:text-ink-secondary">← New interview</Link>
 
       {/* Hero */}

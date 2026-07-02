@@ -1,9 +1,12 @@
 "use client";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function UserMenu() {
   const { data: session, status } = useSession();
+  const [open, setOpen] = useState(false);
 
   if (status === "loading") return <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />;
 
@@ -22,24 +25,33 @@ export default function UserMenu() {
   const firstName = session.user.name?.split(" ")[0] ?? session.user.name;
 
   return (
-    <div className="glass flex items-center gap-3 rounded-full px-3 py-1.5 text-sm">
-      <div className="relative group">
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="glass flex items-center gap-3 rounded-full px-3 py-1.5 text-sm transition hover:text-ink-primary"
+        aria-expanded={open}
+      >
         {session.user.image ? (
-          <Image src={session.user.image} alt={session.user.name ?? ""} width={24} height={24} className="rounded-full cursor-default" />
+          <Image src={session.user.image} alt={session.user.name ?? ""} width={24} height={24} className="rounded-full" />
         ) : (
-          <div className="h-6 w-6 rounded-full btn-accent grid place-items-center text-xs font-bold cursor-default">
+          <div className="grid h-6 w-6 place-items-center rounded-full btn-accent text-xs font-bold">
             {session.user.name?.[0] ?? "?"}
           </div>
         )}
-        {/* Tooltip on hover */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-lg bg-white/10 backdrop-blur px-2.5 py-1 text-xs text-ink-primary opacity-0 group-hover:opacity-100 transition pointer-events-none">
-          {firstName}
-        </div>
-      </div>
-      <span className="hidden text-ink-secondary sm:block max-w-[120px] truncate">{firstName}</span>
-      <button onClick={() => signOut()} className="text-ink-muted hover:text-ink-primary transition text-xs">
-        Sign out
+        <span className="hidden max-w-[120px] truncate text-ink-secondary sm:block">{firstName}</span>
       </button>
+
+      {open && (
+        <div className="glass-strong absolute right-0 z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-hair py-1 text-sm shadow-2xl">
+          <Link href="/favorites" onClick={() => setOpen(false)} className="block px-4 py-2 text-ink-secondary transition hover:bg-white/[0.06] hover:text-ink-primary">
+            My Favorites
+          </Link>
+          <button onClick={() => signOut()} className="block w-full px-4 py-2 text-left text-ink-muted transition hover:bg-white/[0.06] hover:text-ink-primary">
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 }

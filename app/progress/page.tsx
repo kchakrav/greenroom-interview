@@ -23,7 +23,7 @@ export default function ProgressPage() {
   const maxOverall = 5;
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <Nav />
       <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Your <span className="accent-text">progress</span>.</h1>
       <p className="mt-2 text-ink-secondary">Every practice run is tracked here so you can watch yourself improve.</p>
