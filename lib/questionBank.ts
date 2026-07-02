@@ -33,7 +33,7 @@ const ALL = ["junior", "mid", "senior", "staff", "manager", "senior-manager", "d
 
 interface DeepCategorySpec {
   prefix: string;
-  disciplineId: "product" | "aiml" | "system-design" | "fde";
+  disciplineId: string;
   competency: string;
   type: QType;
   levels: string[];
@@ -287,6 +287,384 @@ const FDE_LENSES = [
   "handoff, internal champion enablement, and support readiness",
 ];
 
+const ENGINEERING_SCENARIOS = [
+  "You are building a multi-tenant SaaS platform",
+  "You are migrating a monolith to services",
+  "You are owning a high-traffic API",
+  "You are improving a flaky CI/CD pipeline",
+  "You are building an event-driven backend",
+  "You are maintaining a large frontend application",
+  "You are designing mobile offline sync",
+  "You are responsible for a security-sensitive auth flow",
+  "You are operating a latency-sensitive data service",
+  "You are onboarding a team to infrastructure-as-code",
+  "You are reducing cloud cost for a mature service",
+  "You are hardening a system after an outage",
+  "You are leading a cross-team platform migration",
+  "You are reviewing a risky architecture proposal",
+  "You are mentoring engineers through a complex delivery effort",
+];
+
+const ENGINEERING_CHALLENGES = [
+  "p95 latency doubled after a launch",
+  "the team cannot reproduce a production bug",
+  "a dependency is being deprecated with a short deadline",
+  "test coverage is high but defects keep escaping",
+  "a database table is growing faster than expected",
+  "mobile clients must support unreliable networks",
+  "a security review blocks release",
+  "developer velocity is slowing because of brittle architecture",
+  "on-call load is burning out the team",
+  "a migration must happen without downtime",
+  "code ownership is unclear across teams",
+  "cost is rising faster than customer growth",
+  "a senior stakeholder wants a shortcut that increases risk",
+  "a junior teammate is stuck on a critical path task",
+  "observability is too weak to explain failures",
+];
+
+const ENGINEERING_LENSES = [
+  "requirements clarification and explicit tradeoffs",
+  "data structures and algorithmic complexity",
+  "API boundaries, contracts, and backwards compatibility",
+  "database schema, indexes, and query plans",
+  "resilience, retries, idempotency, and failure modes",
+  "observability, SLOs, tracing, and runbooks",
+  "secure design, threat modeling, and least privilege",
+  "test strategy across unit, integration, contract, and e2e",
+  "incremental migration, feature flags, and rollback",
+  "frontend performance, accessibility, and state management",
+  "mobile architecture, offline behavior, and battery/network constraints",
+  "team communication, RFCs, and design review",
+  "incident response and postmortem learning",
+  "cost, capacity, and operational complexity",
+  "mentorship, delegation, and engineering leadership",
+];
+
+const DATA_SCENARIOS = [
+  "You are analyzing retention for a subscription product",
+  "You are building a company metrics layer",
+  "You are investigating a revenue reporting discrepancy",
+  "You are designing an experiment for a checkout change",
+  "You are building a fraud model",
+  "You are creating a self-serve analytics warehouse",
+  "You are evaluating a recommendation model",
+  "You are measuring marketing channel incrementality",
+  "You are debugging a broken pipeline",
+  "You are designing an executive dashboard",
+  "You are building a forecasting model",
+  "You are analyzing marketplace supply-demand balance",
+  "You are improving data quality across event tracking",
+  "You are researching a novel ML method",
+  "You are scaling a data science or analytics team",
+];
+
+const DATA_CHALLENGES = [
+  "the metric is moving in the wrong direction",
+  "stakeholders disagree about the definition of success",
+  "event instrumentation changed without notice",
+  "the sample size is too small for easy conclusions",
+  "the result may be confounded by seasonality",
+  "training labels are delayed, noisy, or biased",
+  "the model performs well offline but poorly online",
+  "data freshness is not meeting business needs",
+  "a dashboard is trusted by executives but contains errors",
+  "the pipeline fails intermittently",
+  "privacy constraints limit what data can be joined",
+  "a causal claim is being made from observational data",
+  "business users need a clear recommendation, not a notebook",
+  "the team must choose between speed and rigor",
+  "leaders want a forecast for a highly uncertain market",
+];
+
+const DATA_LENSES = [
+  "SQL, joins, window functions, and data validation",
+  "metric trees, semantic layers, and source-of-truth governance",
+  "exploratory analysis, segmentation, and cohorting",
+  "statistics, confidence intervals, and uncertainty communication",
+  "experiment design, power, guardrails, and validity threats",
+  "causal inference and incrementality",
+  "feature engineering, leakage, and label quality",
+  "model selection, evaluation, and calibration",
+  "precision-recall, business cost, and thresholding",
+  "pipeline orchestration, lineage, and freshness",
+  "data modeling, dimensional design, and dbt-style transformations",
+  "storytelling, visualization, and executive communication",
+  "research rigor, literature review, and reproducibility",
+  "MLOps, monitoring, drift, and retraining",
+  "data team operating model and stakeholder partnership",
+];
+
+const DESIGN_SCENARIOS = [
+  "You are redesigning onboarding for a productivity app",
+  "You are improving checkout for an ecommerce product",
+  "You are creating a design system for a growing company",
+  "You are researching why enterprise admins struggle with setup",
+  "You are designing accessibility improvements for a core flow",
+  "You are improving a mobile banking experience",
+  "You are designing an AI assistant experience",
+  "You are leading critique for a controversial redesign",
+  "You are simplifying a complex data dashboard",
+  "You are designing collaboration features for teams",
+  "You are repositioning a brand for a new market",
+  "You are building a prototype for usability testing",
+  "You are resolving disagreement between product and engineering",
+  "You are scaling UX research across squads",
+  "You are managing designers through a craft-quality reset",
+];
+
+const DESIGN_CHALLENGES = [
+  "users abandon the flow at a confusing step",
+  "stakeholders want a visually polished solution before research",
+  "accessibility issues block launch",
+  "the design system is inconsistent across teams",
+  "research findings conflict with leadership intuition",
+  "the product must support novice and power users",
+  "AI uncertainty must be communicated clearly",
+  "mobile constraints force major tradeoffs",
+  "a prototype tests well but engineering says it is too expensive",
+  "brand goals conflict with usability",
+  "internationalization changes layout and interaction assumptions",
+  "a critique becomes personal or unproductive",
+  "quantitative data and qualitative research point in different directions",
+  "the team needs a high-confidence decision quickly",
+  "design quality is declining as the org scales",
+];
+
+const DESIGN_LENSES = [
+  "problem framing, personas, and jobs-to-be-done",
+  "heuristic evaluation and interaction design principles",
+  "information architecture, hierarchy, and progressive disclosure",
+  "research methods, recruiting, moderation, and synthesis",
+  "usability testing and prototype fidelity choices",
+  "accessibility, inclusive design, and WCAG constraints",
+  "visual craft, typography, spacing, and brand expression",
+  "design systems, tokens, components, and governance",
+  "AI UX, uncertainty, correction, and user control",
+  "mobile-first constraints and responsive behavior",
+  "storytelling, stakeholder influence, and critique facilitation",
+  "experimentation, metrics, and product outcomes",
+  "handoff, implementation partnership, and QA",
+  "portfolio narrative, reflection, and tradeoffs",
+  "design leadership, coaching, and team operating rituals",
+];
+
+const SALES_SCENARIOS = [
+  "You are prospecting into a cold enterprise account",
+  "You are running discovery with a skeptical buyer",
+  "You are preparing a demo for a technical evaluator",
+  "You are negotiating a renewal at risk",
+  "You are managing a complex multi-threaded deal",
+  "You are responding to a pricing objection",
+  "You are building pipeline for a new territory",
+  "You are selling a technical platform to business and IT stakeholders",
+  "You are rescuing a deal that went dark",
+  "You are expanding a successful customer account",
+  "You are handling a competitor displacement",
+  "You are coaching a rep who misses qualification steps",
+  "You are forecasting a quarter with uncertain late-stage deals",
+  "You are designing a customer success adoption plan",
+  "You are aligning sales, SE, product, and legal on a strategic account",
+];
+
+const SALES_CHALLENGES = [
+  "the prospect says they are only researching",
+  "the economic buyer is not engaged",
+  "procurement demands a large discount",
+  "the champion leaves the company",
+  "the technical evaluator raises security concerns",
+  "the customer is not realizing promised value",
+  "pipeline coverage is below target",
+  "a competitor claims they are cheaper and easier",
+  "the demo must connect to a painful business outcome",
+  "the forecast is under scrutiny from leadership",
+  "legal review creates urgency and risk",
+  "the account has many stakeholders with different incentives",
+  "the buyer asks for a custom feature",
+  "a renewal is blocked by low adoption",
+  "a rep needs coaching without losing confidence",
+];
+
+const SALES_LENSES = [
+  "SPIN discovery and pain quantification",
+  "MEDDIC qualification and deal inspection",
+  "Challenger-style commercial insight",
+  "value selling, ROI, and business case construction",
+  "objection isolation, reframing, and next-step control",
+  "multi-threading, champion building, and stakeholder mapping",
+  "technical discovery and solution fit",
+  "demo narrative, proof points, and mutual action plans",
+  "negotiation, procurement, and discount governance",
+  "pipeline hygiene, forecasting, and stage criteria",
+  "customer success health, adoption, and expansion",
+  "competitive positioning and displacement strategy",
+  "resilience, coachability, and activity discipline",
+  "sales leadership, call coaching, and performance management",
+  "cross-functional escalation with product, legal, and security",
+];
+
+const MARKETING_SCENARIOS = [
+  "You are launching a new B2B SaaS product",
+  "You are repositioning a product in a crowded category",
+  "You are diagnosing a paid acquisition channel",
+  "You are creating a content strategy for organic growth",
+  "You are planning an enterprise go-to-market motion",
+  "You are refreshing a brand after market confusion",
+  "You are improving lifecycle email conversion",
+  "You are building a campaign for a new segment",
+  "You are measuring product-led growth loops",
+  "You are enabling sales for a competitive displacement",
+  "You are deciding whether to sponsor a major event",
+  "You are launching an AI feature with trust concerns",
+  "You are building a partner co-marketing plan",
+  "You are managing a creative team through a fast launch",
+  "You are setting marketing strategy for the next fiscal year",
+];
+
+const MARKETING_CHALLENGES = [
+  "CAC is rising while conversion falls",
+  "messaging resonates with users but not buyers",
+  "sales says the leads are low quality",
+  "brand awareness is high but differentiation is weak",
+  "a campaign drives traffic but not pipeline",
+  "attribution is disputed across teams",
+  "creative fatigue appears in paid channels",
+  "SEO traffic is flat despite more content",
+  "a competitor reframes the category",
+  "launch timing changes because product slips",
+  "the audience mistrusts AI claims",
+  "budget is cut mid-quarter",
+  "international markets require different positioning",
+  "leadership wants a bold narrative with proof",
+  "the team is split between short-term pipeline and long-term brand",
+];
+
+const MARKETING_LENSES = [
+  "positioning, category alternatives, and differentiated value",
+  "ICP, segmentation, personas, and buying committee",
+  "GTM strategy, launch tiers, and channel sequencing",
+  "funnel analytics, CAC, LTV, payback, and conversion",
+  "experimentation, incrementality, and attribution limits",
+  "creative strategy, messaging tests, and narrative arcs",
+  "content strategy, SEO, distribution, and thought leadership",
+  "product marketing, sales enablement, and competitive battlecards",
+  "lifecycle, onboarding, activation, and retention messaging",
+  "brand strategy, trust, and reputation risk",
+  "event, partner, and community marketing",
+  "AI marketing claims, proof, and responsible messaging",
+  "budget allocation and portfolio tradeoffs",
+  "executive communication and cross-functional alignment",
+  "marketing leadership, coaching, and operating cadence",
+];
+
+const OPERATIONS_SCENARIOS = [
+  "You are redesigning a broken cross-functional process",
+  "You are running a critical company-wide program",
+  "You are building an operating cadence for leadership",
+  "You are improving support operations after ticket volume spikes",
+  "You are managing vendor selection for a strategic system",
+  "You are analyzing why onboarding time doubled",
+  "You are coordinating a company reorg rollout",
+  "You are preparing quarterly planning and OKRs",
+  "You are reducing cost in a fulfillment workflow",
+  "You are managing risk for a delayed launch",
+  "You are implementing a new ERP/CRM process",
+  "You are helping the CEO prioritize executive team focus",
+  "You are measuring process health across regions",
+  "You are turning a manual workflow into an automated one",
+  "You are leading managers through a high-ambiguity operational change",
+];
+
+const OPERATIONS_CHALLENGES = [
+  "the current owner is unclear",
+  "handoffs create delays and errors",
+  "teams disagree on the root cause",
+  "leadership wants action before analysis is complete",
+  "the process spans product, sales, finance, and support",
+  "data is fragmented across systems",
+  "a launch date is fixed but scope is not",
+  "change fatigue is high",
+  "the solution requires new rituals and accountability",
+  "cost savings could hurt customer experience",
+  "a vendor is underperforming",
+  "OKRs are too broad to drive decisions",
+  "risk is hidden until late in the program",
+  "frontline teams do not trust leadership's plan",
+  "the work must scale without adding headcount",
+];
+
+const OPERATIONS_LENSES = [
+  "current-state mapping, bottlenecks, and root cause analysis",
+  "RACI, ownership, and decision rights",
+  "process metrics, SLAs, and leading indicators",
+  "program charters, milestones, risks, and dependencies",
+  "stakeholder mapping and communication cadence",
+  "OKRs, operating rhythms, and executive reviews",
+  "cost-benefit analysis and resource allocation",
+  "change management, enablement, and adoption",
+  "automation, tooling, and systems integration",
+  "vendor management and procurement tradeoffs",
+  "escalation paths and risk governance",
+  "analytics, dashboards, and operational health",
+  "prioritization under ambiguity",
+  "chief-of-staff leverage and leadership-team effectiveness",
+  "people leadership, coaching, and performance management",
+];
+
+const QA_SCENARIOS = [
+  "You are testing a new checkout flow",
+  "You are designing automation for a flaky regression suite",
+  "You are preparing release criteria for a mobile app",
+  "You are investigating a production bug missed by QA",
+  "You are building performance tests for a high-traffic API",
+  "You are adding CI/CD quality gates",
+  "You are testing an AI-assisted workflow",
+  "You are validating accessibility across a design system",
+  "You are improving bug triage and severity definitions",
+  "You are testing a migration with dual-write behavior",
+  "You are leading QA for a cross-platform launch",
+  "You are building a quality strategy for a growing engineering org",
+  "You are selecting tools for test automation",
+  "You are coaching a team that treats QA as a late-stage gate",
+  "You are reducing escaped defects without slowing delivery",
+];
+
+const QA_CHALLENGES = [
+  "requirements are ambiguous",
+  "automation is flaky and developers ignore failures",
+  "release pressure is high",
+  "production data reveals an untested edge case",
+  "performance degrades only under realistic load",
+  "manual testing cannot keep up with release cadence",
+  "CI is slow and blocks developers",
+  "the team lacks clear severity and priority rules",
+  "accessibility defects are found late",
+  "test environments differ from production",
+  "a migration creates data correctness risk",
+  "AI outputs are probabilistic and hard to assert",
+  "ownership between QA and engineering is unclear",
+  "leaders want quality metrics that are not vanity metrics",
+  "a QA engineer needs coaching on technical growth",
+];
+
+const QA_LENSES = [
+  "risk-based test planning and requirement clarification",
+  "test pyramid, unit/integration/e2e balance, and coverage gaps",
+  "automation architecture, selectors, fixtures, and maintainability",
+  "CI/CD quality gates, parallelization, and flake management",
+  "exploratory testing, charters, and edge-case discovery",
+  "bug triage, severity, priority, and reproduction quality",
+  "performance, load, soak, and capacity testing",
+  "accessibility, localization, and cross-device testing",
+  "data validation, migrations, and backward compatibility",
+  "API contract testing and service virtualization",
+  "AI evaluation, golden sets, and nondeterministic behavior",
+  "quality metrics, escaped defects, and release readiness",
+  "developer partnership and shift-left quality culture",
+  "test strategy communication and stakeholder tradeoffs",
+  "QA leadership, coaching, and process improvement",
+];
+
 const DEEP_CATEGORY_SIZE = 105;
 
 const PRODUCT_DEEP_BANK: BankQuestion[] = [
@@ -361,6 +739,97 @@ const FDE_DEEP_BANK: BankQuestion[] = [
   ...deepQuestions({ prefix: "fdedeep-field-product", disciplineId: "fde", competency: "Field-to-Product Feedback", type: "strategy", levels: ["senior", "staff", "manager", "director"], difficulty: 5, source: "OpenAI FDE postings; Palantir Dev versus Delta model; Awesome-FDE-Roadmap", count: DEEP_CATEGORY_SIZE, scenarios: FDE_SCENARIOS, challenges: FDE_CHALLENGES, lenses: FDE_LENSES, guidance: "Evaluate reusable pattern extraction, account-specific versus platform decisions, roadmap signal quality, product feedback, internal documentation, and operating leverage across deployments." }),
 ];
 
+const ENGINEERING_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "engdeep-problem", disciplineId: "engineering", competency: "Problem Solving", type: "technical", levels: IC, difficulty: 3, source: "Cracking the Coding Interview; Elements of Programming Interviews; engineering interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate decomposition, edge cases, constraints, complexity, debugging discipline, and the ability to choose a practical implementation path." }),
+  ...deepQuestions({ prefix: "engdeep-techdepth", disciplineId: "engineering", competency: "Technical Depth", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Designing Data-Intensive Applications; system design primers; Staff Engineer", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate knowledge of systems, data, reliability, security, performance, and how technical choices map to product and operational outcomes." }),
+  ...deepQuestions({ prefix: "engdeep-codedesign", disciplineId: "engineering", competency: "Code/Design Quality", type: "technical", levels: IC, difficulty: 4, source: "Clean Code; Refactoring; Google engineering practices; practical design review rubrics", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate maintainability, modularity, testing strategy, API clarity, migration safety, and how the candidate improves code without overengineering." }),
+  ...deepQuestions({ prefix: "engdeep-frontend", disciplineId: "engineering", competency: "Frontend System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Frontend system design practice; Web.dev performance guidance; WCAG", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate client architecture, state management, performance, accessibility, design-system integration, API contracts, and observability from the browser." }),
+  ...deepQuestions({ prefix: "engdeep-backend", disciplineId: "engineering", competency: "API & System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 4, source: "System Design Interview; Designing Data-Intensive Applications; API design practice", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate API design, storage, scaling, reliability, security, idempotency, and a migration plan that respects existing clients." }),
+  ...deepQuestions({ prefix: "engdeep-db", disciplineId: "engineering", competency: "Databases", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Designing Data-Intensive Applications; SQL and database interview practice", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate schema design, indexes, isolation, query plans, migrations, replication, partitioning, and correctness under load." }),
+  ...deepQuestions({ prefix: "engdeep-reliability", disciplineId: "engineering", competency: "Systems & Reliability", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "Google SRE; production engineering interview practice; incident postmortem rubrics", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate SLOs, error budgets, incident response, runbooks, failover, observability, operational ownership, and sustainable on-call design." }),
+  ...deepQuestions({ prefix: "engdeep-security", disciplineId: "engineering", competency: "Secure Coding", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 5, source: "OWASP; secure coding interview practice; threat modeling guides", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate threat modeling, input handling, authz/authn, secrets, dependency risk, auditability, and secure-by-default tradeoffs." }),
+  ...deepQuestions({ prefix: "engdeep-mlsys", disciplineId: "engineering", competency: "ML System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "Machine learning system design interviews; Chip Huyen ML systems; production ML practice", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate data, features, training/serving split, model monitoring, latency, cost, drift, and feedback loops from product outcomes." }),
+  ...deepQuestions({ prefix: "engdeep-leadership", disciplineId: "engineering", competency: "People Leadership", type: "leadership", levels: MGMT.concat(["staff"]), difficulty: 4, source: "The Manager's Path; Staff Engineer; engineering management interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: ENGINEERING_SCENARIOS, challenges: ENGINEERING_CHALLENGES, lenses: ENGINEERING_LENSES, guidance: "Evaluate coaching, delegation, feedback, org health, prioritization, delivery through others, and judgment under people/process ambiguity." }),
+];
+
+const DATA_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "datadeep-sql", disciplineId: "data", competency: "SQL", type: "technical", levels: ["junior", "mid", "senior"], difficulty: 3, source: "Ace the Data Science Interview; SQL interview practice; analytics engineering guides", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate SQL fluency, data validation, edge cases, performance awareness, and the ability to translate business questions into reliable queries." }),
+  ...deepQuestions({ prefix: "datadeep-rigor", disciplineId: "data", competency: "Analytical Rigor", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Trustworthy Online Controlled Experiments; Practical Statistics for Data Scientists", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate hypothesis quality, segmentation, uncertainty, confounding, metric validity, and whether conclusions are decision-grade." }),
+  ...deepQuestions({ prefix: "datadeep-stats", disciplineId: "data", competency: "Statistics", type: "technical", levels: ["junior", "mid", "senior", "staff"], difficulty: 4, source: "Practical Statistics for Data Scientists; StatQuest; data science interview guides", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate statistical intuition, assumptions, confidence, significance, power, bias/variance, and communication of uncertainty." }),
+  ...deepQuestions({ prefix: "datadeep-exp", disciplineId: "data", competency: "Experiment Design", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 5, source: "Trustworthy Online Controlled Experiments; experimentation platform practice", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate test design, randomization, guardrails, sample size, validity threats, interpretation, and decisioning under imperfect evidence." }),
+  ...deepQuestions({ prefix: "datadeep-biz", disciplineId: "data", competency: "Business Insight", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Ace the Data Science Interview; analytics leadership practice", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate translating analysis to business action, metric choice, narrative clarity, stakeholder empathy, and knowing when more rigor is or is not needed." }),
+  ...deepQuestions({ prefix: "datadeep-pipe", disciplineId: "data", competency: "Pipelines", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Fundamentals of Data Engineering; analytics engineering and dbt practice", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate orchestration, lineage, freshness, data contracts, backfills, testing, failure handling, and operational ownership of data products." }),
+  ...deepQuestions({ prefix: "datadeep-model", disciplineId: "data", competency: "SQL / Modeling", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Kimball dimensional modeling; dbt analytics engineering; data warehouse interview practice", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate dimensional modeling, grain, joins, semantic definitions, metric governance, maintainability, and performance tradeoffs." }),
+  ...deepQuestions({ prefix: "datadeep-ml", disciplineId: "data", competency: "ML System Design", type: "system-design", levels: ["mid", "senior", "staff"], difficulty: 5, source: "Designing Machine Learning Systems; Machine Learning Interviews; ML system design guides", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate problem framing, labels, features, model choice, evaluation, serving, monitoring, drift, and business cost of errors." }),
+  ...deepQuestions({ prefix: "datadeep-research", disciplineId: "data", competency: "Research Depth", type: "technical", levels: ["senior", "staff"], difficulty: 5, source: "ML research interview practice; reproducible research principles", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate literature grounding, experimental rigor, novelty, ablation design, reproducibility, and how research translates into product or scientific impact." }),
+  ...deepQuestions({ prefix: "datadeep-comm", disciplineId: "data", competency: "Communication", type: "behavioral", levels: ALL, difficulty: 3, source: "Data storytelling practice; Harvard competency behavioral questions", count: DEEP_CATEGORY_SIZE, scenarios: DATA_SCENARIOS, challenges: DATA_CHALLENGES, lenses: DATA_LENSES, guidance: "Evaluate clarity, audience adaptation, visualization choices, handling pushback, and driving a decision from evidence." }),
+];
+
+const DESIGN_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "desdeep-craft", disciplineId: "design", competency: "Design Craft", type: "craft", levels: IC, difficulty: 3, source: "Articulating Design Decisions; NN/g usability heuristics; design portfolio rubrics", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate craft, rationale, hierarchy, interaction quality, constraints, iteration, and whether design choices solve the user problem." }),
+  ...deepQuestions({ prefix: "desdeep-exercise", disciplineId: "design", competency: "Design Exercise", type: "case", levels: IC, difficulty: 3, source: "NN/g; design exercise interview practice; Don't Make Me Think", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate problem framing, assumptions, exploration, prioritization, solution clarity, testing plan, and communication under time constraints." }),
+  ...deepQuestions({ prefix: "desdeep-ux", disciplineId: "design", competency: "Interaction Design", type: "craft", levels: ["junior", "mid", "senior", "staff"], difficulty: 4, source: "About Face; NN/g interaction design guidance; usability interview practice", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate flow design, affordances, feedback, error prevention, accessibility, state handling, and cognitive-load reduction." }),
+  ...deepQuestions({ prefix: "desdeep-research", disciplineId: "design", competency: "Research Methods", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "User Interviews UX research questions; Just Enough Research; NN/g research methods", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate method selection, recruiting, bias mitigation, synthesis, stakeholder influence, and knowing what evidence is sufficient for the decision." }),
+  ...deepQuestions({ prefix: "desdeep-synthesis", disciplineId: "design", competency: "Synthesis", type: "craft", levels: ["mid", "senior", "staff"], difficulty: 4, source: "UX research synthesis practice; design research interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate turning messy observations into themes, opportunities, prioritization, journey insights, and product implications." }),
+  ...deepQuestions({ prefix: "desdeep-system", disciplineId: "design", competency: "Design Systems", type: "craft", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Design Systems Handbook; Org Design for Design Orgs; component governance practice", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate token/component design, governance, adoption, contribution model, accessibility, documentation, and cross-functional implementation partnership." }),
+  ...deepQuestions({ prefix: "desdeep-visual", disciplineId: "design", competency: "Visual Craft", type: "craft", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "visual design portfolio rubrics; design critique practice", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate visual hierarchy, typography, composition, brand fit, consistency, accessibility, and ability to explain visual decisions." }),
+  ...deepQuestions({ prefix: "desdeep-portfolio", disciplineId: "design", competency: "Portfolio", type: "behavioral", levels: IC, difficulty: 3, source: "NN/g portfolio guidance; Articulating Design Decisions", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate narrative structure, role clarity, constraints, process evidence, outcomes, tradeoffs, and reflection on what changed." }),
+  ...deepQuestions({ prefix: "desdeep-story", disciplineId: "design", competency: "Storytelling", type: "behavioral", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "Articulating Design Decisions; design leadership interview practice", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate framing, persuasion, evidence, audience adaptation, handling critique, and building alignment around user-centered decisions." }),
+  ...deepQuestions({ prefix: "desdeep-lead", disciplineId: "design", competency: "People Leadership", type: "leadership", levels: MGMT.concat(["staff"]), difficulty: 4, source: "Org Design for Design Orgs; design management interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: DESIGN_SCENARIOS, challenges: DESIGN_CHALLENGES, lenses: DESIGN_LENSES, guidance: "Evaluate coaching, critique culture, quality bar, resourcing, design org rituals, stakeholder trust, and team growth." }),
+];
+
+const SALES_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "salesdeep-prospect", disciplineId: "sales", competency: "Prospecting", type: "case", levels: ["junior", "mid", "senior"], difficulty: 3, source: "SPIN Selling; Challenger Sale; SDR interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate account research, personalization, relevance, call planning, resilience, and creating a credible reason for next conversation." }),
+  ...deepQuestions({ prefix: "salesdeep-discovery", disciplineId: "sales", competency: "Discovery", type: "case", levels: ["junior", "mid", "senior"], difficulty: 3, source: "SPIN Selling; MEDDIC; sales discovery interview practice", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate open questioning, pain discovery, impact quantification, qualification, listening, and crisp next-step control." }),
+  ...deepQuestions({ prefix: "salesdeep-cold", disciplineId: "sales", competency: "Cold Outreach Role-play", type: "case", levels: ["junior", "mid"], difficulty: 3, source: "SDR role-play interview practice; SPIN Selling", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate opening, relevance, objection handling, curiosity creation, personalization, and ability to earn time without sounding scripted." }),
+  ...deepQuestions({ prefix: "salesdeep-demo", disciplineId: "sales", competency: "Demo", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Solutions engineering demo practice; Challenger Sale", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate discovery-led demo design, business value mapping, technical credibility, stakeholder tailoring, proof, and mutual next steps." }),
+  ...deepQuestions({ prefix: "salesdeep-techdisc", disciplineId: "sales", competency: "Technical Discovery", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "solutions engineer interview guides; MEDDIC technical validation", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate technical requirements, constraints, integration risk, security review, value mapping, and translating between buyer and engineering language." }),
+  ...deepQuestions({ prefix: "salesdeep-objection", disciplineId: "sales", competency: "Objection Handling", type: "behavioral", levels: ["mid", "senior", "manager"], difficulty: 4, source: "Challenger Sale; SPIN Selling; MEDDIC objection handling", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate objection isolation, empathy, reframing, value proof, negotiation discipline, and turning resistance into a clear next step." }),
+  ...deepQuestions({ prefix: "salesdeep-pipeline", disciplineId: "sales", competency: "Pipeline Strategy", type: "strategy", levels: ["mid", "senior", "manager"], difficulty: 4, source: "Sales Acceleration Formula; MEDDIC; revenue leadership practice", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate territory planning, coverage math, stage criteria, forecast quality, deal inspection, pipeline creation, and resource focus." }),
+  ...deepQuestions({ prefix: "salesdeep-renewal", disciplineId: "sales", competency: "Renewal / Expansion", type: "case", levels: ["mid", "senior", "manager"], difficulty: 4, source: "customer success interview practice; SaaS renewal and expansion frameworks", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate adoption health, value realization, stakeholder mapping, risk mitigation, expansion discovery, and executive business review quality." }),
+  ...deepQuestions({ prefix: "salesdeep-resilience", disciplineId: "sales", competency: "Resilience", type: "behavioral", levels: ALL, difficulty: 3, source: "sales behavioral interview practice; Challenger Sale", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate grit, coachability, activity discipline, learning from rejection, emotional regulation, and sustained execution under quota pressure." }),
+  ...deepQuestions({ prefix: "salesdeep-lead", disciplineId: "sales", competency: "People Leadership", type: "leadership", levels: MGMT, difficulty: 4, source: "The Sales Acceleration Formula; sales management interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: SALES_SCENARIOS, challenges: SALES_CHALLENGES, lenses: SALES_LENSES, guidance: "Evaluate coaching cadence, deal review, performance diagnosis, accountability, motivation, and building repeatable sales process." }),
+];
+
+const MARKETING_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "mktdeep-position", disciplineId: "marketing", competency: "Positioning / Messaging", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Obviously Awesome; Product Marketing Alliance; PMM interview practice", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate category framing, target segment, alternatives, differentiated value, proof points, and concise messaging that sales and customers can use." }),
+  ...deepQuestions({ prefix: "mktdeep-gtm", disciplineId: "marketing", competency: "GTM Strategy", type: "strategy", levels: ["mid", "senior", "staff", "manager", "director"], difficulty: 5, source: "Crossing the Chasm; Obviously Awesome; GTM interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate ICP, launch sequencing, channel mix, sales enablement, adoption goals, budget, risks, and measurable leading indicators." }),
+  ...deepQuestions({ prefix: "mktdeep-analytics", disciplineId: "marketing", competency: "Analytics", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Reforge growth; Lean Analytics; marketing analytics interview practice", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate funnel diagnosis, attribution limits, CAC/LTV/payback, incrementality, segmentation, experiment design, and decision-quality metrics." }),
+  ...deepQuestions({ prefix: "mktdeep-experiment", disciplineId: "marketing", competency: "Experimentation", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "Reforge growth; growth marketing interview practice; Trustworthy Online Controlled Experiments", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate hypothesis clarity, audience selection, measurement, creative testing, incrementality, guardrails, and how learnings compound." }),
+  ...deepQuestions({ prefix: "mktdeep-channel", disciplineId: "marketing", competency: "Channels & Analytics", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "growth marketing channel strategy; Reforge; Lenny's Newsletter", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate channel fit, audience behavior, marginal CAC, saturation, attribution, creative-message fit, and budget reallocation." }),
+  ...deepQuestions({ prefix: "mktdeep-content", disciplineId: "marketing", competency: "Content Strategy", type: "case", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "content marketing interview practice; SEO strategy guides", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate audience needs, search intent, editorial positioning, distribution, repurposing, measurement, and quality bar." }),
+  ...deepQuestions({ prefix: "mktdeep-seo", disciplineId: "marketing", competency: "SEO", type: "technical", levels: ["junior", "mid", "senior"], difficulty: 3, source: "SEO interview practice; Google Search Central; content strategy guides", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate keyword strategy, technical SEO, content quality, internal linking, authority, measurement, and tradeoffs against brand/product goals." }),
+  ...deepQuestions({ prefix: "mktdeep-brand", disciplineId: "marketing", competency: "Brand Strategy", type: "strategy", levels: ["mid", "senior", "staff", "manager", "director"], difficulty: 4, source: "Building a StoryBrand; brand strategy interview practice", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate audience insight, narrative, differentiation, trust, consistency, creative expression, and brand measurement beyond vanity awareness." }),
+  ...deepQuestions({ prefix: "mktdeep-creative", disciplineId: "marketing", competency: "Creative", type: "craft", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "creative strategy interview practice; brand marketing rubrics", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate creative brief quality, insight, concept strength, testing, production tradeoffs, channel fit, and learning from performance." }),
+  ...deepQuestions({ prefix: "mktdeep-lead", disciplineId: "marketing", competency: "People Leadership", type: "leadership", levels: MGMT, difficulty: 4, source: "marketing leadership interview practice; High Output Management", count: DEEP_CATEGORY_SIZE, scenarios: MARKETING_SCENARIOS, challenges: MARKETING_CHALLENGES, lenses: MARKETING_LENSES, guidance: "Evaluate team operating cadence, prioritization, coaching, cross-functional alignment, measurement discipline, and balancing brand with demand." }),
+];
+
+const OPERATIONS_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "opsdeep-problem", disciplineId: "operations", competency: "Analytical Problem Solving", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "High Output Management; The Goal; BizOps case interview practice", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate structured diagnosis, data gathering, bottleneck identification, tradeoffs, and translating analysis into an operational decision." }),
+  ...deepQuestions({ prefix: "opsdeep-process", disciplineId: "operations", competency: "Process Design", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "The Goal; High Output Management; operations interview practice", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate current/future state mapping, ownership, handoffs, metrics, controls, implementation sequencing, and adoption." }),
+  ...deepQuestions({ prefix: "opsdeep-exec", disciplineId: "operations", competency: "Execution", type: "behavioral", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "PMBOK; program management interview practice; Shape Up", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate program structure, milestones, risk, dependency management, communication cadence, escalation, and measurable outcomes." }),
+  ...deepQuestions({ prefix: "opsdeep-xfn", disciplineId: "operations", competency: "Cross-functional Coordination", type: "behavioral", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "program management behavioral interviews; Chief of Staff Network", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate stakeholder mapping, influence without authority, decision rights, written alignment, meeting design, and conflict resolution." }),
+  ...deepQuestions({ prefix: "opsdeep-risk", disciplineId: "operations", competency: "Risk Mgmt", type: "case", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "PMBOK risk management; program management interview practice", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate risk identification, probability/impact, mitigation, contingency, escalation, ownership, and ongoing monitoring." }),
+  ...deepQuestions({ prefix: "opsdeep-comm", disciplineId: "operations", competency: "Communication", type: "behavioral", levels: ALL, difficulty: 3, source: "Harvard behavioral competency questions; executive communication practice", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate clarity, audience adaptation, escalation judgment, written updates, meeting hygiene, and converting ambiguity into shared action." }),
+  ...deepQuestions({ prefix: "opsdeep-strategy", disciplineId: "operations", competency: "Strategy", type: "strategy", levels: ["senior", "staff", "manager", "director", "senior-director", "vp"], difficulty: 5, source: "Good Strategy Bad Strategy; Chief of Staff Network; BizOps strategy cases", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate strategic diagnosis, resource allocation, operating model, executive priorities, tradeoffs, and measurable strategic milestones." }),
+  ...deepQuestions({ prefix: "opsdeep-stake", disciplineId: "operations", competency: "Stakeholder Mgmt", type: "behavioral", levels: ["mid", "senior", "staff", "manager"], difficulty: 4, source: "program management and BizOps interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate influence, expectation setting, conflict handling, executive communication, accountability, and trust-building under pressure." }),
+  ...deepQuestions({ prefix: "opsdeep-analytics", disciplineId: "operations", competency: "Analytics", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "operations analytics practice; High Output Management", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate operational metrics, dashboards, data quality, leading indicators, root cause analysis, and using measurement to change behavior." }),
+  ...deepQuestions({ prefix: "opsdeep-lead", disciplineId: "operations", competency: "People Leadership", type: "leadership", levels: MGMT, difficulty: 4, source: "High Output Management; Manager's Path; operations leadership interviews", count: DEEP_CATEGORY_SIZE, scenarios: OPERATIONS_SCENARIOS, challenges: OPERATIONS_CHALLENGES, lenses: OPERATIONS_LENSES, guidance: "Evaluate coaching, accountability, change leadership, org rituals, performance management, and building scalable operating habits." }),
+];
+
+const QA_DEEP_BANK: BankQuestion[] = [
+  ...deepQuestions({ prefix: "qadeep-plan", disciplineId: "qa", competency: "Test Planning", type: "technical", levels: ["junior", "mid", "senior", "staff"], difficulty: 3, source: "ISTQB; Ministry of Testing; QA interview practice", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate risk analysis, coverage strategy, requirements clarification, test data, environments, and release-readiness criteria." }),
+  ...deepQuestions({ prefix: "qadeep-manual", disciplineId: "qa", competency: "Manual Testing", type: "technical", levels: ["junior", "mid", "senior"], difficulty: 3, source: "exploratory testing practice; ISTQB; QA interview guides", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate exploratory thinking, edge cases, charters, reproduction quality, usability/accessibility awareness, and concise bug reporting." }),
+  ...deepQuestions({ prefix: "qadeep-bug", disciplineId: "qa", competency: "Bug Mgmt", type: "behavioral", levels: ["junior", "mid", "senior", "manager"], difficulty: 3, source: "QA lead interview practice; bug triage and severity frameworks", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate prioritization, severity, reproduction, stakeholder communication, triage discipline, and partnership with engineering/product." }),
+  ...deepQuestions({ prefix: "qadeep-auto", disciplineId: "qa", competency: "Test Automation", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "SDET interview practice; test automation pyramid; CI/CD quality guides", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate framework design, maintainability, flake reduction, coverage choices, test data, CI integration, and developer trust." }),
+  ...deepQuestions({ prefix: "qadeep-coding", disciplineId: "qa", competency: "Coding", type: "coding", levels: ["mid", "senior", "staff"], difficulty: 4, source: "SDET coding interview practice; automation engineering guides", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate code clarity, selectors/fixtures, data setup, assertions, error handling, maintainability, and ability to debug failures." }),
+  ...deepQuestions({ prefix: "qadeep-cicd", disciplineId: "qa", competency: "CI/CD Integration", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "DevOps testing practices; CI/CD quality gates; SDET interview rubrics", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate pipeline design, parallelization, gate criteria, test quarantine, environment parity, feedback speed, and release confidence." }),
+  ...deepQuestions({ prefix: "qadeep-perf", disciplineId: "qa", competency: "Performance Testing", type: "technical", levels: ["mid", "senior", "staff"], difficulty: 4, source: "performance testing interview practice; SRE load testing guidance", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate workload modeling, load/soak/stress tests, bottleneck diagnosis, metrics, capacity assumptions, and communicating performance risk." }),
+  ...deepQuestions({ prefix: "qadeep-analysis", disciplineId: "qa", competency: "Analysis", type: "case", levels: ["mid", "senior", "staff"], difficulty: 4, source: "QA analytics and quality strategy practice", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate defect trend analysis, escaped defect root cause, quality metrics, release risk, and continuous improvement recommendations." }),
+  ...deepQuestions({ prefix: "qadeep-strategy", disciplineId: "qa", competency: "Quality Strategy", type: "strategy", levels: ["senior", "staff", "manager", "director"], difficulty: 5, source: "QA leadership interviews; Modern Testing principles; Ministry of Testing", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate test strategy, shift-left culture, automation investment, quality ownership, metrics, risk-based release decisions, and scaling quality practices." }),
+  ...deepQuestions({ prefix: "qadeep-lead", disciplineId: "qa", competency: "People Leadership", type: "leadership", levels: MGMT, difficulty: 4, source: "QA manager interview practice; engineering management coaching rubrics", count: DEEP_CATEGORY_SIZE, scenarios: QA_SCENARIOS, challenges: QA_CHALLENGES, lenses: QA_LENSES, guidance: "Evaluate coaching, quality culture, process change, cross-functional influence, team growth, and balancing speed with confidence." }),
+];
+
 const FDE_SEED_BANK: BankQuestion[] = [
   { id: "fde-case-logistics-dashboard", disciplineId: "fde", competency: "Deployment Decomposition", levels: ["mid", "senior", "staff"], type: "case",
     prompt: "A logistics customer says warehouse teams cannot trust the AI rerouting dashboard. Diagnose the situation and propose the first 30 days of work.",
@@ -396,7 +865,7 @@ const FDE_SEED_BANK: BankQuestion[] = [
     source: "Palantir Dev versus Delta model; OpenAI FDE field feedback expectations", difficulty: 5 },
 ];
 
-export const QUESTION_BANK: BankQuestion[] = [
+const BASE_QUESTION_BANK: BankQuestion[] = [
   // ───────────────────────── GENERAL / BEHAVIORAL (all disciplines) ─────────────────────────
   { id: "g-beh-1", disciplineId: "general", competency: "Communication", levels: ALL, type: "behavioral",
     prompt: "Tell me about a time you had to explain something complex to a non-expert audience. What did you do?",
@@ -1750,6 +2219,95 @@ export const QUESTION_BANK: BankQuestion[] = [
   ...AI_DEEP_BANK,
   ...SYSTEM_DESIGN_DEEP_BANK,
   ...FDE_DEEP_BANK,
+  ...ENGINEERING_DEEP_BANK,
+  ...DATA_DEEP_BANK,
+  ...DESIGN_DEEP_BANK,
+  ...SALES_DEEP_BANK,
+  ...MARKETING_DEEP_BANK,
+  ...OPERATIONS_DEEP_BANK,
+  ...QA_DEEP_BANK,
+];
+
+const MIN_COMPETENCY_SIZE = 205;
+const TOP_UP_SCENARIOS = [
+  "You are joining a high-growth team with ambiguous goals",
+  "You are asked to improve a mature workflow with mixed stakeholder feedback",
+  "You are responsible for a launch with tight deadlines and incomplete information",
+  "You are diagnosing a recurring quality or adoption problem",
+  "You are taking over an initiative after a failed first attempt",
+  "You are balancing a short-term customer need against long-term platform health",
+  "You are preparing an executive recommendation with imperfect data",
+  "You are leading cross-functional work where incentives conflict",
+  "You are mentoring a teammate while still owning a critical deliverable",
+  "You are responding to a surprise market, customer, or operational change",
+];
+const TOP_UP_CHALLENGES = [
+  "stakeholders disagree about the root problem",
+  "the first solution creates a new risk",
+  "the team has limited data and limited time",
+  "quality signals and business signals point in different directions",
+  "a senior leader wants a simple answer but the tradeoff is real",
+  "customers ask for different versions of success",
+  "the work requires both technical judgment and communication",
+  "the initial plan is no longer viable",
+  "the decision has second-order effects across teams",
+  "the candidate must show ownership without overclaiming impact",
+];
+const TOP_UP_LENSES = [
+  "problem framing, assumptions, and decision criteria",
+  "stakeholder mapping and communication plan",
+  "metrics, guardrails, and evidence quality",
+  "risk assessment and mitigation options",
+  "sequencing, scope control, and rollback planning",
+  "customer impact and operational feasibility",
+  "technical or craft constraints and tradeoffs",
+  "cross-functional alignment and escalation paths",
+  "learning loops, retrospectives, and durable improvement",
+  "leadership judgment appropriate to the seniority level",
+];
+
+function topUpThinCategories(base: BankQuestion[]): BankQuestion[] {
+  const groups = new Map<string, BankQuestion[]>();
+  for (const question of base) {
+    if (question.disciplineId === "general") continue;
+    const key = `${question.disciplineId}|${question.competency}`;
+    groups.set(key, [...(groups.get(key) ?? []), question]);
+  }
+
+  const additions: BankQuestion[] = [];
+  for (const [key, questions] of groups) {
+    if (questions.length >= MIN_COMPETENCY_SIZE) continue;
+    const [disciplineId, competency] = key.split("|");
+    const sample = questions[0];
+    let generated = 0;
+    for (const scenario of TOP_UP_SCENARIOS) {
+      for (const challenge of TOP_UP_CHALLENGES) {
+        for (const lens of TOP_UP_LENSES) {
+          if (questions.length + generated >= MIN_COMPETENCY_SIZE) break;
+          generated += 1;
+          additions.push({
+            id: `topup-${disciplineId}-${competency.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${generated}`,
+            disciplineId,
+            competency,
+            levels: sample.levels,
+            type: sample.type,
+            prompt: `${competency}: ${scenario}. ${challenge}. Walk me through how you would use ${lens} to handle it.`,
+            guidance: `${sample.guidance} Strong answers should be specific, structured, evidence-aware, and clear about tradeoffs, risks, stakeholder communication, and what would change the decision.`,
+            source: `${sample.source}; GreenRoom generated competency top-up`,
+            difficulty: sample.difficulty,
+          });
+        }
+        if (questions.length + generated >= MIN_COMPETENCY_SIZE) break;
+      }
+      if (questions.length + generated >= MIN_COMPETENCY_SIZE) break;
+    }
+  }
+  return additions;
+}
+
+export const QUESTION_BANK: BankQuestion[] = [
+  ...BASE_QUESTION_BANK,
+  ...topUpThinCategories(BASE_QUESTION_BANK),
 ];
 
 // ───────────────────────── Query helpers ─────────────────────────
